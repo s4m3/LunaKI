@@ -34,17 +34,20 @@ public static class Persist
 	
 	public static void serializeNodesToFile(List<Node> nodes, string filename)
 	{
+		Debug.Log ("Nodes Count Serializing: " + nodes.Count);
 		string path = Persist.pathForDocumentsFile(filename);
 		
 		StreamWriter sw = new StreamWriter(path);
 		foreach(Node node in nodes)
 		{
+			//Debug.Log("node id: " + node.id);
+			//Debug.Log("node successor count: " + node.Successors.Count);
 			string successorList = "";
 			foreach(Node successor in node.Successors)
 			{
 				successorList += successor.id + "*";
 			}
-			string successorListFinal = successorList.Substring(0, successorList.Length-1);
+			string successorListFinal = successorList.Length > 0 ? successorList.Substring(0, successorList.Length-1) : "";
 			string posString = node.position.x.ToString() + ";" + node.position.y.ToString() + ";" + node.position.z.ToString(); 
 			sw.WriteLine(node.id.ToString() + "_" + posString + "_" + successorListFinal);
 		}
@@ -54,6 +57,7 @@ public static class Persist
 	public static List<string> deserializeNodesFromFile(string filename)
 	{
 		string path = Persist.pathForDocumentsFile( filename );
+		Debug.Log ("Path: " + path);
         StreamReader sr = new StreamReader( path );
 		string line;
 		List<string> stringList = new List<string>();

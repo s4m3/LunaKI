@@ -59,6 +59,8 @@ public class AGMorph : MonoBehaviour {
         	if (m_Meshes[i] == null)
         	{	
         		Debug.Log("MeshMorpher mesh  " + i + " has not been setup correctly");
+				Debug.Log ("name: " + transform.name);
+				Debug.Log ("root: " + transform.root.name);
         		morphRunning = false;
         		return;
         	}

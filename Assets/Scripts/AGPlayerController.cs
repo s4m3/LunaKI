@@ -37,6 +37,14 @@ public class AGPlayerController : MonoBehaviour
 	private ActionManager actionManager;
 	
 	public Pathfinder pathfinder;
+	private List<Node> path;
+	private int currentPathID;
+	private int currentNodeID;
+	
+	private Node closestToSun;
+	//if ai player is stuck...
+	private Vector3 lastPosition;
+	private int trials;
 	// Use this for initialization
 	void Start ()
 	{
@@ -79,6 +87,9 @@ public class AGPlayerController : MonoBehaviour
 		this.planet = planet;
 		this.enemy = enemy;
 		this.pathfinder = pathfinder;
+		this.currentPathID = -1;
+		this.trials = 0;
+
 		
 		//nav mesh test
 //		MeshFilter meshFilter = (MeshFilter) planet.GetComponent<MeshFilter>();
@@ -172,9 +183,12 @@ public class AGPlayerController : MonoBehaviour
 		print ("setting it up");
 		if(isAIPlayer) 
 		{
+			this.enemy = AGGame.Instance.GetEnemy();
+			print ("jetzt enemz" + enemy);
 			SetupDecisionMaking();
 			actionManager = ScriptableObject.CreateInstance<ActionManager>();
 			actionManager.ResetActionManager();
+			
 		}
 	}
 
@@ -195,9 +209,11 @@ public class AGPlayerController : MonoBehaviour
 		if (!bIsControllable)
 			return;
 		
-		//if(isAIPlayer)
-			//DoAIAction();
-		//else
+		if(isAIPlayer) {
+			MoveAIPlayer();
+			DoAIAction();
+		}	
+		else
 			CheckInputs ();
 		
 	}
@@ -298,7 +314,12 @@ public class AGPlayerController : MonoBehaviour
 		if (PlayerCanMovePawn ()) {
 			float MovementInputPercent = Mathf.Clamp ((InputVectorMovement.magnitude - MovementInputDeadZone), 0, 1) / (1 - MovementInputDeadZone);
 			InputVectorMovement *= MovementInputPercent;
-			Vector3 MoveDirection = AGCam.transform.rotation * InputVectorMovement;
+			Vector3 MoveDirection;
+			if(isAIPlayer) {
+				MoveDirection = InputVectorMovement;
+			} else {
+				MoveDirection= AGCam.transform.rotation * InputVectorMovement;
+			}
 			pawn.UpdateMoveDirection (Tools.CameraVectorToObject (MoveDirection, pawn.gameObject, AGCam));
 			Debug.DrawRay (pawn.transform.position, Tools.CameraVectorToObject (MoveDirection, pawn.gameObject, AGCam), Color.cyan); 
 		
@@ -306,10 +327,25 @@ public class AGPlayerController : MonoBehaviour
 	
 		if (InputVectorLook.magnitude < MovementInputDeadZone)
 			InputVectorLook = Vector3.zero;
-		Vector3 LookDirection = AGCam.transform.rotation * InputVectorLook;
+		Vector3 LookDirection;
+		if(isAIPlayer) {
+			LookDirection = InputVectorLook;
+		} else {
+			LookDirection = AGCam.transform.rotation * InputVectorLook;
+		}
+		
 		Debug.DrawRay (pawn.transform.position, Tools.CameraVectorToObject (LookDirection, pawn.gameObject, AGCam), Color.magenta);            
 		pawn.SetLookDirection (Tools.CameraVectorToObject (LookDirection, pawn.gameObject, AGCam));	
 	}
+	
+//	void ExecuteAIMovement(Vector3 InputVectorMovement)
+//	{
+//		if (PlayerCanMovePawn ()) {
+//			float MovementInputPercent = Mathf.Clamp ((InputVectorMovement.magnitude - MovementInputDeadZone), 0, 1) / (1 - MovementInputDeadZone);
+//			InputVectorMovement *= MovementInputPercent;
+//			Vector3 MoveDirection = AGCam.transform.rotation * InputVectorMovement;
+//		}
+//	}
 	
 	void TestAIAction()
 	{
@@ -323,6 +359,122 @@ public class AGPlayerController : MonoBehaviour
 		ExecuteMovement(InputVectorMovement, InputVectorLook);
 	}
 	
+	void MoveAIPlayer()
+	{
+		//print("path id:" + currentPathID);
+		//print ("actual path id:" + pathfinder.pathID);
+		if(areCloseTogether(pawn.transform.position, enemy.transform.position, 5f))
+		{
+			print ("is close to enemy");
+			ExecuteMovement(new Vector3(0,0,0), (enemy.transform.position - pawn.transform.position));
+			ActivateAction (Action_Shot);
+			return;
+		}
+		if(currentPathID != pathfinder.pathID)
+		{
+			print ("stuck here 1");
+			path = pathfinder.path;
+			currentPathID = pathfinder.pathID;
+		}
+		if(path == null || path.Count < 1) {
+			print ("stuck here 2");
+			FindNewPath();
+			return;
+		}
+		
+		MoveAlongPath();
+			
+	}
+	
+	void MoveAlongPath() 
+	{
+		if(pathfinder.isFindingPath) 
+		{
+			MoveToSun();
+			return;
+		}
+		closestToSun = null;
+		print ("currentnodeid:" + currentNodeID + " with pathID:" + currentPathID);
+		print ("path count:" + path.Count + " with pathID:"+pathfinder.pathID);
+		if(currentNodeID > path.Count - 1)
+		{
+			print ("path completed: finding new path");
+			FindNewPath();
+			return; 
+		}
+		Vector3 target = path[currentNodeID].position;
+		Vector3 position = pawn.transform.position;
+		if(areCloseTogether(position, target, 2f)) 
+		{
+			currentNodeID++;
+			//print ("are close");
+			return;
+		}
+		if(areFarAway(position, target))
+		{
+			ActivateAction (Action_Dash);
+		}
+
+		Vector3 projection2 = target - position;
+		Debug.DrawRay (position, projection2 * 5, Color.white);
+		Vector3 InputVectorMovement = projection2.normalized;
+		Vector3 InputVectorLook = new Vector3 (0, 0, 0);
+		
+		if(position == lastPosition) 
+		{
+			currentNodeID++;
+			print ("stuck here 3");
+			InputVectorMovement *= -1;
+//			InputVectorMovement = new Vector3(-1f, -1f, 0);
+//			InputVectorLook = new Vector3(-10, -1, 0);
+//			ExecuteMovement(InputVectorMovement, InputVectorLook);
+//			ActivateAction (Action_Dash);
+			//FindNewPath();
+		}
+//		if(trials > 4)
+//		{
+//			InputVectorMovement *= -1;
+//			FindNewPath();
+//			print ("finding new path because cannot shoot through");
+//			
+//			return;
+//		}
+
+
+		ExecuteMovement(InputVectorMovement, InputVectorLook);
+		lastPosition = pawn.transform.position;
+	}
+	
+	void MoveToSun()
+	{
+		print ("Moving to the sun");
+		if(!closestToSun) {
+			int num = pathfinder.kdTree.FindNearest(AGGame.Instance.Sun.transform.position);
+			closestToSun = pathfinder.Nodes[num];
+		}
+		if(areCloseTogether(closestToSun.position, pawn.transform.position, 3f)) return;
+			
+		ExecuteMovement((closestToSun.position - pawn.transform.position), (enemy.transform.position - pawn.transform.position));
+		
+	}
+	
+	void FindNewPath()
+	{
+		currentNodeID = 0;
+		pathfinder.CalculateNewPath(pawn.transform.position, enemy.transform.position);
+	}
+	
+	
+	bool areCloseTogether(Vector3 position, Vector3 target, float distance) 
+	{
+		return ((position - target).magnitude < distance);	
+	}
+	
+	bool areFarAway(Vector3 position, Vector3 target) 
+	{
+		return ((position - target).magnitude > 10f);	
+	}
+	
 	void DoAIAction()
 	{
 		actionManager.scheduleAction(actionManager.createAction(MakeDecision()));
@@ -334,56 +486,6 @@ public class AGPlayerController : MonoBehaviour
 	{
 		controlButtons ();
 		controlAxis ();
-       
-			
-//		//TODO: Refactor into Generic System
-//		if (Mathf.Abs (Input.GetAxisRaw ("Fire1_p" + PlayerID)) > 0.5f) {
-//			// Debug.Break();
-//			ActivateAction (Action_Shot);
-//		} else if (Action_Shot.bHoldButton) {
-//			Action_Shot.ReleaseButton ();
-//		}
-//		
-//		if (Input.GetButtonDown ("KM_SwitchPlayer")) {
-//			Print.Log ("KM_SW: " + m_KM_PlayerID);
-//			m_KM_PlayerID = ((m_KM_PlayerID + 1) % m_KM_MaxPlayerID == 0) ? 1 : m_KM_PlayerID + 1;
-//			Print.Log ("KM_SW_2: " + m_KM_PlayerID);
-//		}
-//
-//
-//		if (Input.GetButton ("Fire2_p" + PlayerID)) {
-//			ActivateAction (Action_Dash);
-//		} else if (Action_Dash.bHoldButton)
-//			Action_Dash.ReleaseButton ();
-//
-//		if (Input.GetButton ("Fire3_p" + PlayerID)) {
-//			ActivateAction (Action_Melee);
-//		} else if (Action_Melee.bHoldButton)
-//			Action_Melee.ReleaseButton ();
-			
-		//MOVEMENTS
-		//TODO: keyboard input for testing
-		//Vector3 InputVectorMovement = new Vector3(Input.GetAxis("HorizontalKeyboard"), Input.GetAxis("VerticalKeyboard"));
-		//Direct Input
-//		Vector3 InputVectorMovement = new Vector3 (Input.GetAxis ("Horizontal_p" + PlayerID), Input.GetAxis ("Vertical_p" + PlayerID), 0);
-//		Vector3 InputVectorLook = new Vector3 (Input.GetAxis ("HorizontalLook_p" + PlayerID), -Input.GetAxis ("VerticalLook_p" + PlayerID), 0);
-//
-//		if (pawn != null) {
-//			if (PlayerCanMovePawn ()) {
-//				float MovementInputPercent = Mathf.Clamp ((InputVectorMovement.magnitude - MovementInputDeadZone), 0, 1) / (1 - MovementInputDeadZone);
-//				InputVectorMovement *= MovementInputPercent;
-//				Vector3 MoveDirection = AGCam.transform.rotation * InputVectorMovement;
-//				pawn.UpdateMoveDirection (Tools.CameraVectorToObject (MoveDirection, pawn.gameObject, AGCam));
-//				Debug.DrawRay (pawn.transform.position, Tools.CameraVectorToObject (MoveDirection, pawn.gameObject, AGCam), Color.cyan); 
-//			
-//			}
-//
-//			if (InputVectorLook.magnitude < MovementInputDeadZone)
-//				InputVectorLook = Vector3.zero;
-//			Vector3 LookDirection = AGCam.transform.rotation * InputVectorLook;
-//			Debug.DrawRay (pawn.transform.position, Tools.CameraVectorToObject (LookDirection, pawn.gameObject, AGCam), Color.magenta);            
-//			pawn.SetLookDirection (Tools.CameraVectorToObject (LookDirection, pawn.gameObject, AGCam));	
-//		}
 	}
 	
 	public bool ActivateAction (AGAction action)

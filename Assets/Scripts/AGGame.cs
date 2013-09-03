@@ -40,6 +40,10 @@ public class AGGame : MonoBehaviour {
 	
 	public GameObject pathfinderPrefab;
 	private Pathfinder pathfinder;
+	
+	//TODO:erase
+	public GameObject textTest;
+	public GameObject nodeSphere;
 
     bool m_spawnDelay = true;
 	protected AGSoundServer m_SoundServer = null; // TODO
@@ -270,7 +274,7 @@ public class AGGame : MonoBehaviour {
 	{
 		if(!mainMenu || mainMenu.gameMode == MainMenu.GameMode.None) return;
 		
-		m_SoundServer.Un_Mute(mainMenu.isMuted);
+		//m_SoundServer.Un_Mute(mainMenu.isMuted);
 		if(mainMenu.gameMode == MainMenu.GameMode.Multiplayer)
 		{
 			ChooseCharacters();	
@@ -288,12 +292,19 @@ public class AGGame : MonoBehaviour {
 		GameObject obj1 = (GameObject) GameObject.Instantiate(pathfinderPrefab);
 		pathfinder = obj1.GetComponent<Pathfinder>();
 		pathfinder.Planet = Planet.gameObject;
+		pathfinder.nodeSphere = nodeSphere;
 		pathfinder.Init();
-		
+		pathfinder.text = textTest;
+		print (Players[0].Controller.pawn);
 		Players[Players.Length - 1].Controller.SetupAIController(Planet.gameObject, Players[0].Controller.pawn, pathfinder);
 		
 		//Persist.serializeNodesToFile(pathfinder.Nodes, "nodes.dat");
 		
+	}
+	
+	public AGPawn GetEnemy()
+	{
+		return Players[0].Controller.pawn;
 	}
 	
 	void WaitForPlayersToHaveChosenCharacter()

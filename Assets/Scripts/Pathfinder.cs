@@ -6,7 +6,9 @@ public class Pathfinder : MonoBehaviour {
 	
 	public GameObject waypointCreaterPrefab;
 	public GameObject Planet;
-	private int maxAmountOfSuccessors = 10;
+	private int maxAmountOfSuccessors = 6;
+	
+	private static Pathfinder pathfinderInstance;
 	
 	public GameObject TestSphere;
 	
@@ -14,14 +16,45 @@ public class Pathfinder : MonoBehaviour {
 	public List<Waypoint> waypoints;
 	public List<Node> Nodes;
 	
-
+	public Vector3[] nodePositions;
+	public KDTree kdTree;
+	
+	public List<Node> path;
+	public int pathID;
+	
+	FindPathJob findPathJob;
+	public bool isFindingPath = false;
+	
+	public List<int> deletedNodesIDs;
+	public GameObject text;
+	public GameObject nodeSphere;
+	
+	private float loadingPercentage = 0;
+	private bool debug = false;
+	
+	public static Pathfinder Instance
+    {
+        get
+        {
+            return pathfinderInstance != null ? pathfinderInstance : GetInstance();
+        }
+    }
+	
+	private static Pathfinder GetInstance()
+    {
+	
+		pathfinderInstance = (Pathfinder) GameObject.FindObjectOfType(typeof(Pathfinder));
+       	return pathfinderInstance;
+    }
+	
 	public void Init () {
+		pathID = 0;
 		//are there nodes already stored?
 		//TODO: as coroutine... oder ganzes init als coroutine
 		LoadNodesFromFileAndConvert();
 		if(Nodes.Count == 0)
 		{
-			print ("here");
+			Debug.Log ("No nodes found: Creating new nodes!");
 			GameObject obj = (GameObject) GameObject.Instantiate(waypointCreaterPrefab);
 			wpCreator = obj.GetComponent<WaypointCreater>();
 			wpCreator.planet = Planet;
@@ -29,25 +62,94 @@ public class Pathfinder : MonoBehaviour {
 			this.waypoints = wpCreator.Waypoints;
 			CreateNodesFromWaypoints();
 		}
+		
+		nodePositions = GetPositionsForKDTree();
+		kdTree = KDTree.MakeFromPoints(nodePositions);
+		
+	}
 	
-		float time = Time.realtimeSinceStartup;
-		StartCoroutine(StartPathfind(Nodes[0], Nodes[4823]));
-		print (Time.realtimeSinceStartup - time);
+	Vector3[] GetPositionsForKDTree() {
+		Vector3[] positions = new Vector3[Nodes.Count];
+		for(int i=0; i<Nodes.Count; i++) {
+			positions[i] = Nodes[i].position;
+		}
+		return positions;
 	}
 	
 	void Update () {
+		if (findPathJob != null)
+	    {
+	        if (findPathJob.Update())
+	        {
+				//print path
+				for(int i=0; i<path.Count; i++)
+				{
+					Node n = path[i];
+					GameObject obj = (GameObject) GameObject.Instantiate(text);
+					TextMesh tm = obj.GetComponent<TextMesh>();
+					tm.text = i.ToString();
+					Instantiate(obj, n.position, Quaternion.identity);
+					
+				}
+	            findPathJob = null;
+	        }
+	    }
+	}
 	
+	public Node FindNodeToPositionWithKDTree(Vector3 target) 
+	{
+		//float time = Time.time;
+		int num = kdTree.FindNearest(target);
+		Debug.Log("kdTree: found node with id: " + Nodes[num].id + "and distance: " + Vector3.Distance(target, Nodes[num].position) );
+		//Debug.Log ("Time needed:" + (Time.time - time));
+		return Nodes[num];
+	}
+	
+	//NOT IN USE ANYMORE
+	public Node FindNodeToPosition(Vector3 position)
+	{
+		float time = Time.time;
+		float lowest = float.MaxValue;
+		float current = float.MaxValue;
+		int id = -1;
+		foreach(Node n in Nodes) {
+			current = Vector3.Distance(n.position, position);
+			if( current < lowest) {
+				lowest = current;
+				id = n.id;
+				if(lowest < 0.8f) return n;
+			}
+		}
+		
+		Node nodeToFind = Nodes.Find(
+					delegate(Node nd)
+	            	{
+	                	return nd.id == id;
+	            	});
+		print ("standard: nearest node: " + id + " with distance: " +lowest );
+		Debug.Log ("Time needed:" + (Time.time - time));
+		return nodeToFind;
+	}
+	
+	public void CalculateNewPath(Vector3 start, Vector3 target)
+	{
+		Node a = FindNodeToPositionWithKDTree(start);
+		Node b = FindNodeToPositionWithKDTree(target);
+
+		StartPathfind(a, b);
 	}
 	
 	private void LoadNodesFromFileAndConvert()
 	{
-		List<string> stringList = Persist.deserializeNodesFromFile("nodes.dat");
+		List<string> stringList = Persist.deserializeNodesFromFile("newNodesDeleted2.dat");
 		string[] arr;
 		string[] posArr;
 		Node node;
+		print("stringlist count:" + stringList.Count);
 		foreach(string current in stringList)
 		{
 			node = new Node();
+			node.nodeSpherePrefab = nodeSphere;
 			arr = current.Split('_');
 			posArr = arr[1].Split(';');
 			
@@ -63,20 +165,26 @@ public class Pathfinder : MonoBehaviour {
 			Nodes.Add(node);
 		}
 		
+		
 		//after creating all nodes, insert successors
+		//print ("successors for " + Nodes.Count);
 		foreach(Node n in Nodes)
 		{
 			Node nodeToFind;
 			n.Successors = new List<Node>();
 			foreach(string succString in n.successorIDs)
 			{
-				nodeToFind = Nodes.Find(
-					delegate(Node nd)
-	            	{
-	                	return nd.id == System.Convert.ToInt32(succString);
-	            	});
-				n.Successors.Add(nodeToFind);
+				if(succString != "") {
+					nodeToFind = Nodes.Find(
+						delegate(Node nd)
+		            	{
+		                	return nd.id == System.Convert.ToInt32(succString);
+		            	});
+					n.Successors.Add(nodeToFind);
+				}
 			}
+			//print ("!!!!!show");
+			//n.ShowNode();
 		}
 	}
 	
@@ -86,6 +194,11 @@ public class Pathfinder : MonoBehaviour {
 		{
 			Debug.DrawLine(nodes[l].position, nodes[l+1].position, Color.red, 10000000, true);
 		}
+	}
+	
+	private float euclideanDist(Node point1, Node point2)
+	{
+		return Vector3.Distance(point1.position, point2.position);
 	}
 	
 	private void CreateNodesFromWaypoints()
@@ -100,6 +213,10 @@ public class Pathfinder : MonoBehaviour {
 			node.DistanceToGoal = double.MaxValue;
 			Nodes.Add(node);
 		}
+		CalculateSuccessors();
+	}
+	
+	private void CalculateSuccessors() {
 		Node currentNode;
 		List<Node> closestSuccessors = new List<Node>();
 		for(int i=0; i<Nodes.Count; i++)
@@ -119,8 +236,6 @@ public class Pathfinder : MonoBehaviour {
 								});
 			Nodes[i].Successors.AddRange(closestSuccessors.GetRange(0, maxAmountOfSuccessors));
 			closestSuccessors.Clear();
-			//print (Nodes[i].Successors.Count);
-			//printList(Nodes[i].Successors);
 		}
 	}
 	
@@ -133,84 +248,84 @@ public class Pathfinder : MonoBehaviour {
 		}
 	}
 	
-	public IEnumerator StartPathfind(Node startNode, Node endNode)
+	public void StartPathfind(Node startNode, Node endNode)
 	{
-		List<Node> path = FindPath(startNode, endNode);
-		foreach(Node adf in path)
-		{
-			Debug.Log(adf.id);
-		}
-		DrawLines(path);
-//		Instantiate(TestSphere, Nodes[0].position, transform.rotation);
-//		Instantiate(TestSphere, Nodes[60].position, transform.rotation);
-		yield return null;
+		if(isFindingPath) return;
+		isFindingPath = true;
+		findPathJob = new FindPathJob();
+		findPathJob.startNode = startNode;
+		findPathJob.endNode = endNode;
+ 
+    	findPathJob.Start();
 	}
-	
-	public List<Node> FindPath(Node startNode, Node endNode){
-		List<Node> openList = new List<Node>();
-		List<Node> closedList = new List<Node>();
-		Node currentNode;
-		startNode.Cost = 0;
-		currentNode = startNode;
-		openList.Add(currentNode);
-		double lowestCost;
-		int loop=0;
-		while(currentNode.id != endNode.id && loop < 10000){
-			loop++;
-			expand (currentNode, ref openList, closedList, endNode);
-			
-			closedList.Add(currentNode);
-			
-			lowestCost = double.MaxValue;
-			Node nodeWithLowestCost = null;
-			if(openList.Count <= 0)
-				break;
-			
-			foreach(Node wn in openList) {
-				if(wn.DistanceToGoal < lowestCost){
-					nodeWithLowestCost = wn;
-					lowestCost = wn.DistanceToGoal;
-				}
-			}
-			currentNode = openList.Find(
-				delegate(Node nd)
-            	{
-                	return nd.id == nodeWithLowestCost.id;
-            	});
-		}
-		closedList.Add(currentNode);
-		return getPath(currentNode, closedList);
-	}
-
-	private void expand(Node expandedNode, ref List<Node> openList, List<Node> closedList, Node endNode){
-		foreach(Node successor in expandedNode.Successors)
-		{
-			if(listContainsNode(closedList, successor))
-				continue;
-			
-			double totalCost = expandedNode.Cost + euclideanDist(expandedNode, successor);
-			
-			if(listContainsNode(openList, successor) && totalCost >= successor.Cost)
-				continue;
-			
-			successor.Cost = totalCost;
-			successor.DistanceToGoal = euclideanDist(successor, endNode);
-			successor.parentID = expandedNode.id;
-			//if(listContainsNode(openList, successor))
-				//update cost?
-			openList.Add(successor);
-		}
-	}
-	
-	private bool listContainsNode(List<Node> list, Node node)
-	{
-		foreach(Node listNode in list)
-		{
-			if(listNode.id == node.id)
-				return true;
-		}
-		return false;
-	}
+	//NOT IN USE ANYMORE***************************
+//	public List<Node> FindPath(Node startNode, Node endNode){
+//		List<Node> openList = new List<Node>();
+//		List<Node> closedList = new List<Node>();
+//		Node currentNode;
+//		startNode.Cost = 0;
+//		startNode.parentID = -1;
+//		currentNode = startNode;
+//		openList.Add(currentNode);
+//		double lowestCost;
+//		int loop=0;
+//		while(currentNode.id != endNode.id && loop < 10000){
+//			loop++;
+//			expand (currentNode, ref openList, closedList, endNode);
+//			
+//			closedList.Add(currentNode);
+//			
+//			lowestCost = double.MaxValue;
+//			Node nodeWithLowestCost = null;
+//			if(openList.Count <= 0)
+//				break;
+//			
+//			foreach(Node wn in openList) {
+//				if(wn.DistanceToGoal < lowestCost){
+//					nodeWithLowestCost = wn;
+//					lowestCost = wn.DistanceToGoal;
+//				}
+//			}
+//			currentNode = openList.Find(
+//				delegate(Node nd)
+//            	{
+//                	return nd.id == nodeWithLowestCost.id;
+//            	});
+//		}
+//		closedList.Add(currentNode);
+//		return getPath(currentNode, closedList);
+//	}
+//
+//	private void expand(Node expandedNode, ref List<Node> openList, List<Node> closedList, Node endNode){
+//		foreach(Node successor in expandedNode.Successors)
+//		{
+//			if(listContainsNode(closedList, successor))
+//				continue;
+//			
+//			double totalCost = expandedNode.Cost + euclideanDist(expandedNode, successor);
+//			
+//			if(listContainsNode(openList, successor) && totalCost >= successor.Cost)
+//				continue;
+//			
+//			successor.Cost = totalCost;
+//			successor.DistanceToGoal = euclideanDist(successor, endNode);
+//			successor.parentID = expandedNode.id;
+//			//if(listContainsNode(openList, successor))
+//				//update cost?
+//			openList.Add(successor);
+//		}
+//	}
+//	
+//	private bool listContainsNode(List<Node> list, Node node)
+//	{
+//		foreach(Node listNode in list)
+//		{
+//			if(listNode.id == node.id)
+//				return true;
+//		}
+//		return false;
+//	}
+	//***************************
 	
 	private float haversineDist(Waypoint point1, Waypoint point2)
 	{
@@ -226,22 +341,71 @@ public class Pathfinder : MonoBehaviour {
 		return d;
 	}
 	
-	private float euclideanDist(Node point1, Node point2)
+
+	
+	//GUI//////////////////	
+	void UpdateAllNodes()
 	{
-		return Vector3.Distance(point1.position, point2.position);
+		deletedNodesIDs = new List<int>();
+		foreach(Node nd in Nodes) 
+		{
+			if(nd.ns) {
+				NodeSphereVars nsv = nd.ns.GetComponent<NodeSphereVars>();
+				if(nsv.delete) 
+				{
+					print ("node" + nd.id + "will be deleted");
+					deletedNodesIDs.Add(nd.id);
+				}
+			}
+
+			
+		}
+		foreach(int delID in deletedNodesIDs) {
+			
+			Node nodeToDelete = Nodes.Find(delegate(Node nodeToFind)
+            	{
+					//if(nodeToFind.id == delID) print ("found node with id " + delID);
+                	return nodeToFind.id == delID;
+            	});
+			Destroy(nodeToDelete.ns);
+//			print ("count1: "+Nodes.Count);
+//			print ("remove node with id:" + nodeToDelete.id);
+			Nodes.RemoveAll((Node i) => i.id == delID);
+			//Nodes.Remove(nodeToDelete);
+			//print ("count2: "+Nodes.Count);
+			Destroy(nodeToDelete);
+			
+		}
+		foreach(Node n in Nodes)
+		{
+			n.UpdatePosition();
+			n.UpdateSuccessors(deletedNodesIDs, Nodes);
+		}
 	}
 	
-	private List<Node> getPath(Node lastNode, List<Node> closedList) {
-		List<Node> path = new List<Node>();
-		path.Add(lastNode);
-		while(lastNode.parentID != -1){
-			lastNode = closedList.Find(delegate(Node nd)
-            	{
-                	return nd.id == lastNode.parentID;
-            	});
-			path.Add(lastNode);
+	void SaveAllNodes()
+	{
+		Persist.serializeNodesToFile(Nodes, "newNodesDeleted2.dat");
+	}
+	
+	void OnGUI()
+	{
+		if(!debug) return;
+		
+		if(GUI.Button (new Rect(0, 0, 120, 40), "update all nodes"))
+		{
+			UpdateAllNodes();
 		}
-		path.Reverse();
-		return path;
+		
+		if(GUI.Button (new Rect(0, 150, 120, 40), "recalc successors"))
+		{
+			CalculateSuccessors();
+		}
+		
+		if(GUI.Button (new Rect(0, 300, 120, 50), "save new nodes"))
+		{
+			SaveAllNodes();
+		}
+		//GUI.Label(new Rect(100, 100, 500, 400), loadingPercentage.ToString()); 
 	}
 }
