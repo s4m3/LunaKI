@@ -1,11 +1,11 @@
 using UnityEngine;
 using System.Collections;
 
-public class AIAction_ChargeHealth : AIAction {
+public class ActionDecision_Attack : ActionDecision {
 
 	public override DecisionTreeNode makeDecision ()
 	{
-		this.actionType = AIAction.ActionType.ChargeHealth;
+		this.actionType = ActionDecision.ActionDecisionType.Attack;
 		return this;
 	}
 }

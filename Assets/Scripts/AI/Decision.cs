@@ -12,7 +12,7 @@ public class Decision : DecisionTreeNode {
 	{
 		if(!trueNode)
 		{
-			this.trueNode = CreateInstance<Decision_Health>();
+			this.trueNode = new Decision_Health();
 			this.trueNode.setupBaseValues(enemy, self);
 		}
 		return trueNode;

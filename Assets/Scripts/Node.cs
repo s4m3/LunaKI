@@ -24,10 +24,10 @@ public class Node : Object {
 	{
 		//GameObject np = nodeSphere;
 		ns = (GameObject) GameObject.Instantiate(nodeSpherePrefab, position, Quaternion.identity);
-		foreach(Node n in Successors)
-		{
-			//Debug.DrawLine(position, n.position, Color.white, 10000000, true);
-		}
+//		foreach(Node n in Successors)
+//		{
+//			Debug.DrawLine(position, n.position, Color.white, 10000000, true);
+//		}
 		//Debug.Log (position + " vs. " + ns.transform.position);
 	}
 	

@@ -9,7 +9,6 @@ public class MainMenu : MonoBehaviour {
 	private int selectedButtonIndex = 0;
 	private bool upClick = false;
 	private bool downClick = false;
-	private bool canChangeMenuItem = true;
 	public GUIStyle buttonStyle;
 	public Texture2D backgroundTexture;
 	private float input;
@@ -73,7 +72,7 @@ public class MainMenu : MonoBehaviour {
 	{
 		upClick = input == -1;
 		downClick = input == 1;
-		canChangeMenuItem = false;
+		//canChangeMenuItem = false;
 		//TODO: change selected menu item
 		selectedButtonIndex += (int)input;
 		if(selectedButtonIndex > 3)
@@ -83,7 +82,7 @@ public class MainMenu : MonoBehaviour {
 		//to prevent the change to happen multiple times per frame, there has to be waiting time
 		yield return new WaitForSeconds(0.1f);
 		upClick = downClick = false;
-		canChangeMenuItem = true;
+		//canChangeMenuItem = true;
 
 	}
 	

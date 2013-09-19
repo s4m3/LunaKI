@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public class DecisionTreeNode : ScriptableObject {
+public class DecisionTreeNode : Object {
 	
 	protected AGPawn self;
 	protected AGPawn enemy;

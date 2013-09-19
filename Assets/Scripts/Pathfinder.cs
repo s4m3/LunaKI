@@ -29,7 +29,6 @@ public class Pathfinder : MonoBehaviour {
 	public GameObject text;
 	public GameObject nodeSphere;
 	
-	private float loadingPercentage = 0;
 	private bool debug = false;
 	
 	public static Pathfinder Instance
@@ -186,6 +185,7 @@ public class Pathfinder : MonoBehaviour {
 			//print ("!!!!!show");
 			//n.ShowNode();
 		}
+		//DrawSuccessors(Nodes);
 	}
 	
 	private void DrawLines(List<Node> nodes)
@@ -193,6 +193,17 @@ public class Pathfinder : MonoBehaviour {
 		for(int l=0; l<nodes.Count-1; l++)
 		{
 			Debug.DrawLine(nodes[l].position, nodes[l+1].position, Color.red, 10000000, true);
+		}
+	}
+	
+	private void DrawSuccessors(List<Node> nodes)
+	{
+		foreach(Node node in nodes)
+		{
+			foreach(Node successor in node.Successors)
+			{
+				Debug.DrawLine(node.position, successor.position, Color.yellow, 10000000, true);
+			}
 		}
 	}
 	

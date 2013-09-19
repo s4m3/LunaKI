@@ -1,26 +1,39 @@
 using UnityEngine;
 using System.Collections;
 
-public class Action : ScriptableObject {
+public class Action : Object {
+	
 	public int expiryTime;
 	public int priority;
-		
-	public bool canInterrupt()
+	public AGPlayerController controller;
+	
+	public Action(AGPlayerController controller)
+	{
+		this.controller = controller;
+	}
+	
+	public Action(AGPlayerController controller, int expiryTime, int priority) : this(controller)
+	{
+		this.expiryTime = expiryTime;
+		this.priority = priority;
+	}
+	
+	public virtual bool canInterrupt()
 	{
 		return false;
 	}
 	
-	public bool canDoBoth(Action otherAction)
+	public virtual bool canDoBoth(Action otherAction)
 	{
 		return false;
 	}
 	
-	public bool isComplete()
+	public virtual bool isComplete()
 	{
-		return false;
+		return true;
 	}
 	
-	public void execute()
+	public virtual void execute()
 	{
 		
 	}

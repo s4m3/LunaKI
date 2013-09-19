@@ -2,10 +2,16 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class ActionManager : ScriptableObject {
+public class ActionManager : Object {
 	List<Action> queue;
 	List<Action> active;
+	AGPlayerController controller;
 	int currentTime;
+	
+	public ActionManager(AGPlayerController controller)
+	{
+		this.controller = controller;
+	}
 	
 	public void ResetActionManager()
 	{
@@ -16,11 +22,20 @@ public class ActionManager : ScriptableObject {
 	
 	public void scheduleAction(Action action)
 	{
+		//action soll nicht zweimal in der queue sein
+		Action[] copy = queue.ToArray();
+		foreach(Action currAction in copy) {
+			Debug.Log (currAction.GetType());
+			if(currAction.GetType().Equals(action.GetType()))
+				return;
+		}
 		queue.Add(action);
+		//Debug.Log("count:" + queue.Count);
 	}
 	
 	public void execute()
 	{
+		Debug.Log("executing in action manager, count:" + queue.Count);
 		currentTime += 1;
 		foreach(Action action in queue)
 		{
@@ -33,29 +48,60 @@ public class ActionManager : ScriptableObject {
 				active.Add(action);
 			}
 		}
+		Debug.Log (1);
 		Action[] copy = queue.ToArray();
+		Action[] copyActive = active.ToArray();
 		foreach(Action currAction in copy)
 		{
+			Debug.Log ("currentTime: "+ currentTime);
+			Debug.Log ("expiryTime: " + currAction.expiryTime);
 			if(currAction.expiryTime < currentTime)
 				queue.Remove(currAction);
 			
-			foreach(Action activeAction in active)
+			foreach(Action activeAction in copyActive)
 			{
 				if(currAction.canDoBoth(activeAction))
 				{
 					queue.Remove(currAction);
 					active.Add(currAction);
+					Debug.Log("added action");
 				}
 			}
+			
 		}
-		
+		//if nothing interrupts AND no action is added AND active is empty -> insert new action out of queue with highest prio
+		if(active.Count == 0) 
+		{
+			Action actionWithHighestPrio = null;
+			int currentHighestPrio = -1;
+			bool found = false;
+			foreach(Action currAction in copy)
+			{
+				if(currAction.priority > currentHighestPrio)
+				{
+					actionWithHighestPrio = currAction;
+					currentHighestPrio = currAction.priority;
+					found = true;
+				}
+			}
+			if(found) active.Add(actionWithHighestPrio);
+		}
+				
+		Debug.Log (2);
+
 		Action[] activeCopy = active.ToArray();
 		foreach(Action actAction in activeCopy)
 		{
 			if(actAction.isComplete())
+			{
+				Debug.Log("is complete");
 				active.Remove(actAction);
+			}
 			else
+			{
+				Debug.Log("executing action");
 				actAction.execute();
+			}
 		}
 		
 	}
@@ -68,12 +114,32 @@ public class ActionManager : ScriptableObject {
 			if(action.priority > highestPrio)
 				highestPrio = action.priority;
 		}
+		Debug.Log("highestPrio" + highestPrio );
 		return highestPrio;
 	}
 	
-	public Action createAction(AIAction.ActionType actionType)
+	public Action createAction(ActionDecision.ActionDecisionType actionType)
 	{
-		Action action = ScriptableObject.CreateInstance<Action>();
+		Action action;
+		switch(actionType)
+		{
+		case ActionDecision.ActionDecisionType.None:
+			action = new Action(controller);
+			Debug.Log("new Action: None");
+			break;
+		case ActionDecision.ActionDecisionType.ChargeHealth:
+			action = new Action_ChargeHealth(controller, currentTime);
+			Debug.Log("new Action: ChargeHealth");
+			break;
+		case ActionDecision.ActionDecisionType.Attack:
+			action = new Action_Attack(controller, currentTime);
+			//Debug.Log("new Action: Attack");
+			break;
+		default:
+			action = new Action(controller);
+			Debug.Log("new Action: None");
+			break;
+		}
 		return action;
 	}
 }
