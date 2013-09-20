@@ -1,120 +1,5 @@
 using UnityEngine;
 using System.Collections;
-//
-//public class MainMenu : MonoBehaviour {
-//
-//	public Vector2 ButtonPosition;
-//	public int ButtonOffset;
-//	private bool joystickButtonDown = false;
-//	private int selectedButtonIndex = 0;
-//	private bool upClick = false;
-//	private bool downClick = false;
-//	public GUIStyle buttonStyle;
-//	public Texture2D backgroundTexture;
-//	private float input;
-//
-//	public enum GameMode {None, Singleplayer, Multiplayer}
-//	public GameMode gameMode;
-//	public bool isMuted = false;
-//	
-//	//temp
-//	private string[] buttonTexts;
-//	
-//	void Awake () {
-//		gameMode = GameMode.None;
-//		//temp
-//		buttonTexts = new string[] {"Start Multiplayer Game", "Start Singleplayer Game", "Mute Music", "Quit Game"};
-//	}
-//	
-//	void Start () {
-//	
-//	}
-//	
-//	void Update () {
-//		
-//		if (Input.GetButton("FireA_p1") || Input.GetButton("FireA_p2"))
-//		{
-//			activateMenuItem();
-//		}
-//		
-//		input = Mathf.Abs(Input.GetAxis("Vertical_p1")) >= Mathf.Abs(Input.GetAxis("Vertical_p2")) ? Input.GetAxis("Vertical_p1") : Input.GetAxis("Vertical_p2");
-//		if((input == 1 && !upClick) || (input == -1 && !downClick)) 
-//		{
-//			print (input);
-//			StartCoroutine(changeMenuItem(-1*input));
-//		}
-//		
-//	}
-//	
-//	private void activateMenuItem()
-//	{
-//		switch(selectedButtonIndex)
-//		{
-//		case 0:
-//			gameMode = GameMode.Multiplayer;
-//			break;
-//		case 1:
-//			gameMode = GameMode.Singleplayer;
-//			break;
-//		case 2:
-//			isMuted = !isMuted;
-//			break;
-//		case 3:
-//			Application.Quit();
-//			break;
-//		default:
-//			gameMode = GameMode.None;
-//			break;
-//		}
-//	}
-//	
-//	private IEnumerator changeMenuItem(float input)
-//	{
-//		upClick = input == -1;
-//		downClick = input == 1;
-//		//canChangeMenuItem = false;
-//		//TODO: change selected menu item
-//		selectedButtonIndex += (int)input;
-//		if(selectedButtonIndex > 3)
-//			selectedButtonIndex = 0;
-//		if(selectedButtonIndex < 0)
-//			selectedButtonIndex = 3;
-//		//to prevent the change to happen multiple times per frame, there has to be waiting time
-//		yield return new WaitForSeconds(0.1f);
-//		upClick = downClick = false;
-//		//canChangeMenuItem = true;
-//
-//	}
-//	
-//	void OnGUI ()
-//	{
-//		GUI.DrawTexture (new Rect (0, 0, Screen.width, Screen.height), backgroundTexture);
-//
-//		if(GUI.Button (new Rect(ButtonPosition.x, ButtonPosition.y, 300, 80), buttonTexts[0]) || (joystickButtonDown && selectedButtonIndex == 0))
-//		{
-//			//Start Multiplayer
-//			gameMode = GameMode.Multiplayer;
-//		}
-//		if(GUI.Button (new Rect(ButtonPosition.x, ButtonPosition.y + ButtonOffset + 80, 300, 80), buttonTexts[1]) || (joystickButtonDown && selectedButtonIndex == 1))
-//		{
-//			//Start Singleplayer
-//			gameMode = GameMode.Singleplayer;
-//		}
-//		if(GUI.Button (new Rect(ButtonPosition.x, ButtonPosition.y + ButtonOffset*2 + 160, 300, 80), buttonTexts[2]) || (joystickButtonDown && selectedButtonIndex == 2))
-//		{
-//			//Mute Music
-//			isMuted = !isMuted;
-//		}
-//		if(GUI.Button (new Rect(ButtonPosition.x, ButtonPosition.y + ButtonOffset*3 + 240, 300, 80), buttonTexts[3]) || (joystickButtonDown && selectedButtonIndex == 3))
-//		{
-//			//Quit Game
-//			Application.Quit();
-//		}
-//	}
-//	
-//}
-
-//////////////////////////////////////
 
 public class MainMenu : MonoBehaviour {
 
@@ -131,10 +16,21 @@ public class MainMenu : MonoBehaviour {
 	public enum GameMode {None, Multiplayer, Singleplayer}
 	public GameMode gameMode;
 	public bool isMuted;
+	private float input;
+	private bool canChangeMenuItem = true;
+	private int selectedButtonIndex = 0;
+	
+	private string[] menuOptions = new string[5];
 	
 	private Vector2 screenRes;//TODO GUI-Manager zum speichern solcher werte
 	private bool creditsVisible;
 	void Awake () {
+		menuOptions[0] = "Multiplayer";
+		menuOptions[1] = "Singleplayer";
+		menuOptions[2] = "Credits";
+		menuOptions[3] = "Sound";
+		menuOptions[4] = "Quit";
+		
 		gameMode = GameMode.None;
 		//if(CreditsXPos == 0) CreditsXPos = Screen.width - credits.width;
 		screenRes = AGGame.Instance.guiManager.ScreenResolution;
@@ -142,6 +38,64 @@ public class MainMenu : MonoBehaviour {
 		creditsVisible = false;
 	}
 	
+	void Update () {
+		
+		if (Input.GetButton("FireA_p1") || Input.GetButton("FireA_p2"))
+		{
+			if(canChangeMenuItem) StartCoroutine(activateMenuItem());
+		}
+		
+		input = Mathf.Abs(Input.GetAxis("Vertical_p1")) >= Mathf.Abs(Input.GetAxis("Vertical_p2")) ? Input.GetAxis("Vertical_p1") : Input.GetAxis("Vertical_p2");
+		input = Mathf.Round(input);
+		if((input == 1 || input == -1) && canChangeMenuItem) 
+		{
+			StartCoroutine(changeMenuItem(-1*input));
+		}
+		
+	}
+	
+	private IEnumerator activateMenuItem()
+	{
+		canChangeMenuItem = false;
+		switch(selectedButtonIndex)
+		{
+		case 0:
+			gameMode = GameMode.Multiplayer;
+			break;
+		case 1:
+			gameMode = GameMode.Singleplayer;
+			break;
+		case 2:
+			creditsVisible = !creditsVisible;
+			break;
+		case 3:
+			isMuted = !isMuted;
+			break;
+		case 4:
+			Application.Quit();
+			break;
+		default:
+			gameMode = GameMode.None;
+			break;
+		}
+		yield return new WaitForSeconds(0.1f);
+		canChangeMenuItem = true;
+	}
+	
+	private IEnumerator changeMenuItem(float input)
+	{
+		canChangeMenuItem = false;
+		//TODO: change selected menu item
+		selectedButtonIndex += (int)input;
+		if(selectedButtonIndex > menuOptions.Length -1)
+			selectedButtonIndex = 0;
+		if(selectedButtonIndex < 0)
+			selectedButtonIndex = menuOptions.Length -1;
+		//to prevent the change to happen multiple times per frame, there has to be waiting time
+		yield return new WaitForSeconds(0.1f);
+		canChangeMenuItem = true;
+
+	}
 
 
 	private void showCredits()
@@ -163,7 +117,7 @@ public class MainMenu : MonoBehaviour {
 		
 		GUILayout.BeginHorizontal();
 		GUILayout.FlexibleSpace();
-		
+		GUI.SetNextControlName(menuOptions[0]);
 		if(GUILayout.Button ("Start Multiplayer Game", buttonStyle))
 		{
 		//Start Multiplayer
@@ -178,6 +132,7 @@ public class MainMenu : MonoBehaviour {
 		GUILayout.BeginHorizontal();
 		GUILayout.FlexibleSpace();
 		
+		GUI.SetNextControlName(menuOptions[1]);
 		if(GUILayout.Button ("Start Singleplayer Game", buttonStyle))
 		{
 		//Start Singleplayer
@@ -192,6 +147,7 @@ public class MainMenu : MonoBehaviour {
 		GUILayout.BeginHorizontal();
 		GUILayout.FlexibleSpace();
 		
+		GUI.SetNextControlName(menuOptions[2]);
 		if(GUILayout.Button ("Credits", buttonStyle))
 		{
 			creditsVisible = !creditsVisible;
@@ -205,10 +161,12 @@ public class MainMenu : MonoBehaviour {
 		GUILayout.BeginHorizontal();
 		GUILayout.FlexibleSpace();
 		
-		if(GUILayout.Button ("Quit", buttonStyle))
+		GUI.SetNextControlName(menuOptions[3]);
+		string buttontext = isMuted ? "Sound On" : "Sound Off";
+		if(GUILayout.Button (buttontext, buttonStyle))
 		{
-			//Quit Game
-			Application.Quit();	
+			//Mute&Unmute
+			isMuted = !isMuted;
 		}
 		
 		GUILayout.FlexibleSpace();
@@ -219,11 +177,11 @@ public class MainMenu : MonoBehaviour {
 		GUILayout.BeginHorizontal();
 		GUILayout.FlexibleSpace();
 		
-		string buttontext = isMuted ? "Sound On" : "Sound Off";
-		if(GUILayout.Button (buttontext, buttonStyle))
+		GUI.SetNextControlName(menuOptions[4]);
+		if(GUILayout.Button ("Quit", buttonStyle))
 		{
-			//Mute&Unmute
-			isMuted = !isMuted;
+			//Quit Game
+			Application.Quit();	
 		}
 				
 		GUILayout.FlexibleSpace();
@@ -235,6 +193,8 @@ public class MainMenu : MonoBehaviour {
 		GUILayout.EndArea();
 		
 		if(creditsVisible) showCredits();
+		
+		GUI.FocusControl(menuOptions[selectedButtonIndex]);
 	}
 	
 }
