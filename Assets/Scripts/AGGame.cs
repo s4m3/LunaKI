@@ -21,6 +21,7 @@ public class AGGame : MonoBehaviour {
 	public int Rounds;
 	private int currentRound = 1;
 	public Vector2[] CameraOffsets = new Vector2[2];
+	public Vector2 DefaultScreenSize = new Vector2(1920f, 1080f);
 	
 	public List <AGPlayerClass> PlayerClasses;
 	
@@ -37,6 +38,8 @@ public class AGGame : MonoBehaviour {
 	private AGGameInterface gameInterface;
 	public GameObject mainMenuPrefab;
 	private MainMenu mainMenu;
+	
+	public GUIManager guiManager;
 	
 	public GameObject pathfinderPrefab;
 	private Pathfinder pathfinder;
@@ -116,9 +119,16 @@ public class AGGame : MonoBehaviour {
 	void Start () {
 		
 		gameState = GameState.Initialize;
+		InitializeGUIManager();
 		
 	}
 	
+	void InitializeGUIManager()
+	{
+		guiManager = new GUIManager();
+		guiManager.ScreenResolution = new Vector2(Screen.width, Screen.height);
+		guiManager.DefaultScreenResolution = DefaultScreenSize;
+	}
 
 
     void Awake ()
@@ -283,7 +293,7 @@ public class AGGame : MonoBehaviour {
 			SetupAIPlayer();
 			ChooseCharacters();
 		}
-		
+		//TODO: SOUND
 		m_SoundServer.m_AudioListenerPrefab.enabled = false;
 	}
 	
