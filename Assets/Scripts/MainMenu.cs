@@ -19,11 +19,18 @@ public class MainMenu : MonoBehaviour {
 	private float input;
 	private bool canChangeMenuItem = true;
 	private int selectedButtonIndex = 0;
+	private bool debug = true;
 	
 	private string[] menuOptions = new string[5];
 	
 	private Vector2 screenRes;//TODO GUI-Manager zum speichern solcher werte
 	private bool creditsVisible;
+	
+	public bool isDebugMode()
+	{
+		return debug;
+	}
+	
 	void Awake () {
 		menuOptions[0] = "Multiplayer";
 		menuOptions[1] = "Singleplayer";
@@ -78,21 +85,24 @@ public class MainMenu : MonoBehaviour {
 			gameMode = GameMode.None;
 			break;
 		}
-		yield return new WaitForSeconds(0.1f);
+		yield return new WaitForSeconds(0.4f);
 		canChangeMenuItem = true;
 	}
 	
 	private IEnumerator changeMenuItem(float input)
 	{
+		if(!canChangeMenuItem) yield return null;
 		canChangeMenuItem = false;
-		//TODO: change selected menu item
+		
 		selectedButtonIndex += (int)input;
 		if(selectedButtonIndex > menuOptions.Length -1)
 			selectedButtonIndex = 0;
 		if(selectedButtonIndex < 0)
 			selectedButtonIndex = menuOptions.Length -1;
+		
+		Debug.Log(selectedButtonIndex);
 		//to prevent the change to happen multiple times per frame, there has to be waiting time
-		yield return new WaitForSeconds(0.1f);
+		yield return new WaitForSeconds(0.3f);
 		canChangeMenuItem = true;
 
 	}
@@ -107,10 +117,14 @@ public class MainMenu : MonoBehaviour {
 	
 	void OnGUI ()
 	{
+		
 		//GUI.matrix = Matrix4x4.TRS( Vector3.zero, Quaternion.identity, new Vector3( Screen.width / 1024.0f, Screen.height / 768.0f, 1.0f ) );
 		GUI.DrawTexture (new Rect (0, 0, screenRes.x, screenRes.y), backgroundTexture);
 		GUI.DrawTexture (new Rect (screenRes.x/2 - logo.width/2 + LogoOffset.x, LogoOffset.y, logo.width, logo.height), logo);
-
+		
+		//DEBUG MODE TOGGLE BUTTON:
+		debug = GUI.Toggle (new Rect (screenRes.x - 100, screenRes.y - 50, 100,50), debug, "Debug Mode");
+		
 		GUILayout.BeginArea(new Rect(0,screenRes.y/2, screenRes.x, screenRes.y/2));
 		
 		GUILayout.BeginVertical(buttonStyle);

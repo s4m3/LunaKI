@@ -47,6 +47,8 @@ public class AGGame : MonoBehaviour {
 	//TODO:erase
 	public GameObject textTest;
 	public GameObject nodeSphere;
+	
+	public bool DebugMode;
 
     bool m_spawnDelay = true;
 	protected AGSoundServer m_SoundServer = null; // TODO
@@ -284,7 +286,8 @@ public class AGGame : MonoBehaviour {
 	{
 		if(!mainMenu || mainMenu.gameMode == MainMenu.GameMode.None) return;
 		
-		//m_SoundServer.Un_Mute(mainMenu.isMuted);
+		DebugMode = mainMenu.isDebugMode();
+		m_SoundServer.Un_Mute(mainMenu.isMuted);
 		if(mainMenu.gameMode == MainMenu.GameMode.Multiplayer)
 		{
 			ChooseCharacters();	
@@ -309,6 +312,15 @@ public class AGGame : MonoBehaviour {
 		Players[Players.Length - 1].Controller.SetupAIController(Planet.gameObject, Players[0].Controller.pawn, pathfinder);
 		
 		//Persist.serializeNodesToFile(pathfinder.Nodes, "nodes.dat");
+		
+		if(!DebugMode) 
+		{
+			foreach(AGPlayerInfo player in Players) 
+			{
+				player.Controller.ChangeCameraRig();
+				if(!player.Controller.isAIPlayer) player.Controller.hasAIOpponent = true;
+			}
+		}
 		
 	}
 	

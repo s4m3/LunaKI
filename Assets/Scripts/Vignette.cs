@@ -11,6 +11,7 @@ public class Vignette : MonoBehaviour {
 	private float vignetteAlpha;
 	Vector2 SplitOffset;
 	AGPlayerController player;
+	public float width;
 	
 	// Use this for initialization
 	void Start () {
@@ -25,10 +26,17 @@ public class Vignette : MonoBehaviour {
 	public void SetPlayer(AGPlayerController _p){	
 		player = _p;
 		SetOffset(AGGame.Get2DCameraOffset(player));
+		width = Screen.width / 2;
 	}
 	public void SetOffset(Vector2 _offset){
 		SplitOffset.x = Screen.width * _offset.x;
 		SplitOffset.y = Screen.width * _offset.y;
+		
+	}
+	
+	public void SetSinglePlayerMode()
+	{
+		width = AGGame.Instance.guiManager.ScreenResolution.x;
 		
 	}
 	
@@ -48,9 +56,9 @@ public class Vignette : MonoBehaviour {
 	void OnGUI() {
 		if(!VignetteTexture)
 			return;
-
+		Debug.Log ("width:" + width);
 		VignetteColor.a = vignetteAlpha;
 		GUI.color = VignetteColor;
-		GUI.DrawTexture(new Rect(SplitOffset.x, 0, Screen.width/2, Screen.height), VignetteTexture, ScaleMode.ScaleAndCrop, true);
+		GUI.DrawTexture(new Rect(SplitOffset.x, 0, width, Screen.height), VignetteTexture, ScaleMode.ScaleAndCrop, true);
 	}
 }

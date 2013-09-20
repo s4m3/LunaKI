@@ -44,6 +44,7 @@ public class CharacterChoiceMenu : MonoBehaviour {
 	}
 	
 	void Awake () {
+		StartCoroutine(waitAtStartUp(1f));
 		joystickButtonDown = false; 
 		List<AGPlayerClass> playerClasses = AGGame.Instance.PlayerClasses;
 		characterIndex = 0;
@@ -72,6 +73,7 @@ public class CharacterChoiceMenu : MonoBehaviour {
 	
 	private void CheckInput()
 	{
+		joystickButtonDown = false;
 		if(Input.GetButton("FireB_p"+player.PlayerID))
 		{
 			joystickButtonDown = false;
@@ -95,6 +97,8 @@ public class CharacterChoiceMenu : MonoBehaviour {
 	
 	private IEnumerator changeCharacter(float input)
 	{
+		if(!canChangeCharacter) yield return null;
+		
 		leftClick = input == -1;
 		rightClick = input == 1;
 		canChangeCharacter = false;
@@ -105,10 +109,18 @@ public class CharacterChoiceMenu : MonoBehaviour {
 			characterIndex = characters.Count - 1;
 		//characterIndex = Mathf.Clamp(characterIndex, 0, characters.Count - 1);
 		//to prevent the change to happen multiple times per frame, there has to be waiting time
-		yield return new WaitForSeconds(0.1f);
+		yield return new WaitForSeconds(0.3f);
 		leftClick = rightClick = false;
 		canChangeCharacter = true;
 
+	}
+	
+	private IEnumerator waitAtStartUp(float time)
+	{
+		canChangeCharacter = false;
+		yield return new WaitForSeconds(time);
+		canChangeCharacter = true;
+		
 	}
 	
 	
@@ -120,8 +132,8 @@ public class CharacterChoiceMenu : MonoBehaviour {
 			GUI.DrawTexture (new Rect (SplitOffset.x + ChooseCharacterTextPos.x, SplitOffset.y + ChooseCharacterTextPos.y, chooseCharacterText.width, chooseCharacterText.height), chooseCharacterText);
 
 		if (GUI.Button (new Rect (SplitOffset.x + CharacterPos.x, SplitOffset.y + CharacterPos.y, characters [characterIndex].width, characters [characterIndex].height), characters [characterIndex], buttonStyle) || joystickButtonDown) {
-			player.characterChosen = true;
-			AGGame.Instance.getSoundServer ().Play ("menu");
+			if(canChangeCharacter) player.characterChosen = true;
+			//AGGame.Instance.getSoundServer ().Play ("menu");
 		}
 		btnL = !leftClick ? buttonL [0] : buttonL [1];
 		btnR = !rightClick ? buttonR [0] : buttonR [1];

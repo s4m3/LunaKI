@@ -81,14 +81,17 @@ public class Pathfinder : MonoBehaviour {
 	        if (findPathJob.Update())
 	        {
 				//print path
-				for(int i=0; i<path.Count; i++)
+				if(AGGame.Instance.DebugMode)
 				{
-					Node n = path[i];
-					GameObject obj = (GameObject) GameObject.Instantiate(text);
-					TextMesh tm = obj.GetComponent<TextMesh>();
-					tm.text = i.ToString();
-					Instantiate(obj, n.position, Quaternion.identity);
-					
+					for(int i=0; i<path.Count; i++)
+					{
+						Node n = path[i];
+						GameObject obj = (GameObject) GameObject.Instantiate(text);
+						TextMesh tm = obj.GetComponent<TextMesh>();
+						tm.text = i.ToString();
+						Instantiate(obj, n.position, Quaternion.identity);
+						
+					}
 				}
 	            findPathJob = null;
 	        }
@@ -104,7 +107,6 @@ public class Pathfinder : MonoBehaviour {
 		return Nodes[num];
 	}
 	
-	//NOT IN USE ANYMORE
 	public Node FindNodeToPosition(Vector3 position)
 	{
 		float time = Time.time;
@@ -187,7 +189,7 @@ public class Pathfinder : MonoBehaviour {
 		}
 		//DrawSuccessors(Nodes);
 	}
-	
+	//DEBUG+++++++++++++++++++++
 	private void DrawLines(List<Node> nodes)
 	{
 		for(int l=0; l<nodes.Count-1; l++)
@@ -206,6 +208,7 @@ public class Pathfinder : MonoBehaviour {
 			}
 		}
 	}
+	//+++++++++++++++++++++++++++
 	
 	private float euclideanDist(Node point1, Node point2)
 	{
@@ -269,74 +272,7 @@ public class Pathfinder : MonoBehaviour {
  
     	findPathJob.Start();
 	}
-	//NOT IN USE ANYMORE***************************
-//	public List<Node> FindPath(Node startNode, Node endNode){
-//		List<Node> openList = new List<Node>();
-//		List<Node> closedList = new List<Node>();
-//		Node currentNode;
-//		startNode.Cost = 0;
-//		startNode.parentID = -1;
-//		currentNode = startNode;
-//		openList.Add(currentNode);
-//		double lowestCost;
-//		int loop=0;
-//		while(currentNode.id != endNode.id && loop < 10000){
-//			loop++;
-//			expand (currentNode, ref openList, closedList, endNode);
-//			
-//			closedList.Add(currentNode);
-//			
-//			lowestCost = double.MaxValue;
-//			Node nodeWithLowestCost = null;
-//			if(openList.Count <= 0)
-//				break;
-//			
-//			foreach(Node wn in openList) {
-//				if(wn.DistanceToGoal < lowestCost){
-//					nodeWithLowestCost = wn;
-//					lowestCost = wn.DistanceToGoal;
-//				}
-//			}
-//			currentNode = openList.Find(
-//				delegate(Node nd)
-//            	{
-//                	return nd.id == nodeWithLowestCost.id;
-//            	});
-//		}
-//		closedList.Add(currentNode);
-//		return getPath(currentNode, closedList);
-//	}
-//
-//	private void expand(Node expandedNode, ref List<Node> openList, List<Node> closedList, Node endNode){
-//		foreach(Node successor in expandedNode.Successors)
-//		{
-//			if(listContainsNode(closedList, successor))
-//				continue;
-//			
-//			double totalCost = expandedNode.Cost + euclideanDist(expandedNode, successor);
-//			
-//			if(listContainsNode(openList, successor) && totalCost >= successor.Cost)
-//				continue;
-//			
-//			successor.Cost = totalCost;
-//			successor.DistanceToGoal = euclideanDist(successor, endNode);
-//			successor.parentID = expandedNode.id;
-//			//if(listContainsNode(openList, successor))
-//				//update cost?
-//			openList.Add(successor);
-//		}
-//	}
-//	
-//	private bool listContainsNode(List<Node> list, Node node)
-//	{
-//		foreach(Node listNode in list)
-//		{
-//			if(listNode.id == node.id)
-//				return true;
-//		}
-//		return false;
-//	}
-	//***************************
+
 	
 	private float haversineDist(Waypoint point1, Waypoint point2)
 	{
@@ -354,7 +290,7 @@ public class Pathfinder : MonoBehaviour {
 	
 
 	
-	//GUI//////////////////	
+	//GUI//////////////////	FOR DEBUG PURPOSES ONLY
 	void UpdateAllNodes()
 	{
 		deletedNodesIDs = new List<int>();

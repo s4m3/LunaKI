@@ -29,6 +29,7 @@ public class AGPlayerController : MonoBehaviour
 	private bool bIsControllable;
 	
 	public bool isAIPlayer = false;
+	public bool hasAIOpponent = false;
 	public GameObject planet;
 	public AGPawn enemy;
 	public GameObject testObject;
@@ -59,6 +60,7 @@ public class AGPlayerController : MonoBehaviour
 			GameObject obj = (GameObject)GameObject.Instantiate (playerMenuPrefab);
 			playerMenu = obj.GetComponent<PlayerMenu> ();
 			playerMenu.SetPlayer (this);
+			//if(hasAIOpponent) playerMenu.SetOffset(Vector2.zero);
           
 		}
 	}
@@ -155,8 +157,14 @@ public class AGPlayerController : MonoBehaviour
 			SetupDecisionMaking();
 			actionManager = new ActionManager(this);
 			actionManager.ResetActionManager();
-			
+						
 		}
+	}
+	
+	public void ChangeCameraRig()
+	{
+		if(isAIPlayer) AGCam.CameraRig.camera.rect = new Rect(0,0,0,0);
+		else AGCam.CameraRig.camera.rect = new Rect(0,0,1,1);
 	}
 
 	bool PlayerCanMovePawn ()
