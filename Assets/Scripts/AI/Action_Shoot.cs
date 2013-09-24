@@ -1,17 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Action_Attack : Action {
+public class Action_Shoot : Action {
 	
-	public Action_Attack(AGPlayerController controller, int currentTime) : base(controller) 
+	public Action_Shoot(AGPlayerController controller, int currentTime) : base(controller) 
 	{
-		this.expiryTime = 100 + currentTime;
-		this.priority = 2;
+		priority = 9;
+		expiryTime = 5 + currentTime;
 	}
 	
 	public override bool canInterrupt ()
 	{
-		return base.canInterrupt ();
+		return true;
 	}
 
 	public override bool canDoBoth (Action otherAction)
@@ -26,7 +26,6 @@ public class Action_Attack : Action {
 
 	public override void execute ()
 	{
-//		Debug.Log("executing");
-		controller.MoveAIPlayer();
+		controller.Shoot();
 	}
 }

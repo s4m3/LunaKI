@@ -56,7 +56,7 @@ public class Vignette : MonoBehaviour {
 	void OnGUI() {
 		if(!VignetteTexture)
 			return;
-		Debug.Log ("width:" + width);
+//		Debug.Log ("width:" + width);
 		VignetteColor.a = vignetteAlpha;
 		GUI.color = VignetteColor;
 		GUI.DrawTexture(new Rect(SplitOffset.x, 0, width, Screen.height), VignetteTexture, ScaleMode.ScaleAndCrop, true);

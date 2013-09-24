@@ -4,16 +4,17 @@ using System.Collections;
 public class Decision : DecisionTreeNode {
 	protected DecisionTreeNode trueNode;
 	protected DecisionTreeNode falseNode;
-	//protected var testValue;
-
-
-
+	
+	public Decision(AGPawn self, AGPawn enemy)
+	{
+		this.self = self;
+		this.enemy = enemy;
+	}
 	protected virtual DecisionTreeNode getBranch()
 	{
 		if(!trueNode)
 		{
-			this.trueNode = new Decision_Health();
-			this.trueNode.setupBaseValues(enemy, self);
+			this.trueNode = new Decision_EnemyInSight(this.self, this.enemy);
 		}
 		return trueNode;
 	}

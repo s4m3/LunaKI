@@ -21,7 +21,7 @@ public class Action_ChargeHealth : Action {
 
 	public override bool isComplete ()
 	{
-		return (controller.pawn.Health.currentValue > controller.pawn.Health.max * 0.3);
+		return (controller.pawn.Health.currentValue > controller.pawn.Health.max * 0.5);
 	}
 
 	public override void execute ()

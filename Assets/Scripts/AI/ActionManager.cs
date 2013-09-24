@@ -25,7 +25,7 @@ public class ActionManager : Object {
 		//action soll nicht zweimal in der queue sein
 		Action[] copy = queue.ToArray();
 		foreach(Action currAction in copy) {
-			Debug.Log (currAction.GetType());
+//			Debug.Log (currAction.GetType());
 			if(currAction.GetType().Equals(action.GetType()))
 				return;
 		}
@@ -35,7 +35,7 @@ public class ActionManager : Object {
 	
 	public void execute()
 	{
-		Debug.Log("executing in action manager, count:" + queue.Count);
+//		Debug.Log("executing in action manager, count:" + queue.Count);
 		currentTime += 1;
 		foreach(Action action in queue)
 		{
@@ -48,13 +48,13 @@ public class ActionManager : Object {
 				active.Add(action);
 			}
 		}
-		Debug.Log (1);
+		//Debug.Log (1);
 		Action[] copy = queue.ToArray();
 		Action[] copyActive = active.ToArray();
 		foreach(Action currAction in copy)
 		{
-			Debug.Log ("currentTime: "+ currentTime);
-			Debug.Log ("expiryTime: " + currAction.expiryTime);
+			//Debug.Log ("currentTime: "+ currentTime);
+			//Debug.Log ("expiryTime: " + currAction.expiryTime);
 			if(currAction.expiryTime < currentTime)
 				queue.Remove(currAction);
 			
@@ -87,19 +87,19 @@ public class ActionManager : Object {
 			if(found) active.Add(actionWithHighestPrio);
 		}
 				
-		Debug.Log (2);
+		//Debug.Log (2);
 
 		Action[] activeCopy = active.ToArray();
 		foreach(Action actAction in activeCopy)
 		{
 			if(actAction.isComplete())
 			{
-				Debug.Log("is complete");
+//				Debug.Log("is complete");
 				active.Remove(actAction);
 			}
 			else
 			{
-				Debug.Log("executing action");
+//				Debug.Log("executing action");
 				actAction.execute();
 			}
 		}
@@ -114,7 +114,7 @@ public class ActionManager : Object {
 			if(action.priority > highestPrio)
 				highestPrio = action.priority;
 		}
-		Debug.Log("highestPrio" + highestPrio );
+//		Debug.Log("highestPrio" + highestPrio );
 		return highestPrio;
 	}
 	
@@ -131,10 +131,38 @@ public class ActionManager : Object {
 			action = new Action_ChargeHealth(controller, currentTime);
 			Debug.Log("new Action: ChargeHealth");
 			break;
-		case ActionDecision.ActionDecisionType.Attack:
-			action = new Action_Attack(controller, currentTime);
-			//Debug.Log("new Action: Attack");
+		case ActionDecision.ActionDecisionType.ChargeEnergy:
+			action = new Action_ChargeEnergy(controller, currentTime);
+			Debug.Log("new Action: ChargeEnergy");
 			break;
+		case ActionDecision.ActionDecisionType.DashToEnemy:
+			action = new Action_DashToEnemy(controller, currentTime);
+			Debug.Log("new Action: DashToEnemy");
+			break;
+		case ActionDecision.ActionDecisionType.MoveToEnemy:
+			action = new Action_MoveToEnemy(controller, currentTime);
+			Debug.Log("new Action: MoveToEnemy");
+			break;
+		case ActionDecision.ActionDecisionType.MoveToEnemyAndMelee:
+			action = new Action_MoveAndMelee(controller, currentTime);
+			Debug.Log("new Action: MoveToEnemyAndMelee");
+			break;
+		case ActionDecision.ActionDecisionType.ActivateUltimate:
+			action = new Action_ActivateUltimate(controller, currentTime);
+			Debug.Log("new Action: ActivateUltimate");
+			break;
+		case ActionDecision.ActionDecisionType.Shoot:
+			action = new Action_Shoot(controller, currentTime);
+			Debug.Log("new Action: Shoot");
+			break;
+//		case ActionDecision.ActionDecisionType.Attack:
+//			action = new Action_Attack(controller, currentTime);
+//			Debug.Log("new Action: Attack");
+//			break;
+//		case ActionDecision.ActionDecisionType.Attack:
+//			action = new Action_Attack(controller, currentTime);
+//			Debug.Log("new Action: Attack");
+//			break;
 		default:
 			action = new Action(controller);
 			Debug.Log("new Action: None");

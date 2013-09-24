@@ -80,8 +80,7 @@ public class AGPlayerController : MonoBehaviour
 	public void SetupDecisionMaking()
 	{
 		//TODO: set one pawn as enemy
-		this.rootDecision = new Decision();
-		this.rootDecision.setupBaseValues(this.enemy, this.pawn);
+		this.rootDecision = new Decision(this.pawn, this.enemy);
 	}
 	public void SetupAIController(GameObject planet, AGPawn enemy, Pathfinder pathfinder)
 	{
@@ -286,6 +285,7 @@ public class AGPlayerController : MonoBehaviour
 	
 	void ExecuteMovement(Vector3 InputVectorMovement, Vector3 InputVectorLook)
 	{
+		//if(isAIPlayer)Debug.Log(InputVectorLook);
 		if (PlayerCanMovePawn ()) {
 			float MovementInputPercent = Mathf.Clamp ((InputVectorMovement.magnitude - MovementInputDeadZone), 0, 1) / (1 - MovementInputDeadZone);
 			InputVectorMovement *= MovementInputPercent;
@@ -314,17 +314,28 @@ public class AGPlayerController : MonoBehaviour
 	}
 	
 	
+	
+	public void ExecuteAIAction(Vector3 movementDirection, Vector3 lookDirection, AGAction action)
+	{
+		if(action is AGAction_Shot) {
+			//spread shots to make imperfect
+			lookDirection.Normalize();
+			Tools.RandomizeVector(ref lookDirection, 0.4f);
+		}
+		ExecuteMovement(movementDirection, lookDirection);
+		ActivateAction(action);
+	}
+	
 	public void MoveAIPlayer()
 	{
 		//print("path id:" + currentPathID);
 		//print ("actual path id:" + pathfinder.pathID);
-		if(areCloseTogether(pawn.transform.position, enemy.transform.position, 5f))
-		{
-			//print ("is close to enemy");
-			ExecuteMovement(new Vector3(0,0,0), (enemy.transform.position - pawn.transform.position));
-			ActivateAction (Action_Shot);
-			return;
-		}
+//		if(areCloseTogether(pawn.transform.position, enemy.transform.position, 5f))
+//		{
+//			//print ("is close to enemy");
+//			//ExecuteAIAction(new Vector3(0,0,0), (enemy.transform.position - pawn.transform.position), Action_Shot);
+//			return;
+//		}
 		if(currentPathID != pathfinder.pathID)
 		{
 			//print ("stuck here 1");
@@ -365,7 +376,7 @@ public class AGPlayerController : MonoBehaviour
 			//print ("are close");
 			return;
 		}
-		if(areFarAway(position, target))
+		if(areFarAway(position, target, 10f))
 		{
 			ActivateAction (Action_Dash);
 		}
@@ -413,6 +424,33 @@ public class AGPlayerController : MonoBehaviour
 		
 	}
 	
+	public void MoveToDark()
+	{
+		if(!closestToSun) {
+			int num = pathfinder.kdTree.FindNearest(AGGame.Instance.Sun.transform.position);
+			closestToSun = pathfinder.Nodes[num];
+		}
+		if(areFarAway(closestToSun.position, pawn.transform.position, 15f)) return;
+			
+		ExecuteMovement((pawn.transform.position - closestToSun.position), Vector3.zero);
+	}
+	
+	public void DashToEnemy()
+	{
+		Vector3 enemyDirection = enemy.transform.position - pawn.transform.position;
+		ExecuteAIAction(enemyDirection, enemyDirection, Action_Dash); 
+	}
+	
+	public bool IsCloseToEnemy()
+	{
+		return areCloseTogether(pawn.transform.position, enemy.transform.position, 5f);
+	}
+	
+	public void Shoot()
+	{
+		ExecuteAIAction(new Vector3(0,0,0), (enemy.transform.position - pawn.transform.position), Action_Shot);
+	}
+	
 	void FindNewPath()
 	{
 		currentNodeID = 0;
@@ -425,9 +463,9 @@ public class AGPlayerController : MonoBehaviour
 		return ((position - target).magnitude < distance);	
 	}
 	
-	bool areFarAway(Vector3 position, Vector3 target) 
+	bool areFarAway(Vector3 position, Vector3 target, float distance) 
 	{
-		return ((position - target).magnitude > 10f);	
+		return ((position - target).magnitude > distance);	
 	}
 	
 	void DoAIAction()

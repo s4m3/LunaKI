@@ -17,6 +17,16 @@ public class Tools : MonoBehaviour {
 	public static bool LayerCheck(LayerMask mask, GameObject obj){
 		return true;
 	}
+	
+	public static void RandomizeVector(ref Vector3 vector, float randomizeValue)
+	{
+		Vector3 temp = new Vector3(vector.x - Mathf.Clamp(Random.value - 0.5f, -randomizeValue, randomizeValue), 
+									vector.y - Mathf.Clamp(Random.value - 0.5f, -randomizeValue, randomizeValue), 
+									vector.z - Mathf.Clamp(Random.value - 0.5f, -randomizeValue, randomizeValue));
+		
+		vector = temp;
+		
+	}
 
     public static void SpawnObjectForPlayerCameras(GameObject objectToSpawn, Vector3 pos)
     {
@@ -50,4 +60,5 @@ public class Tools : MonoBehaviour {
        dstTransform.localScale = srcTransForm.localScale;
            
    }
+	
 }
