@@ -71,7 +71,7 @@ public class MainMenu : MonoBehaviour {
 		inputHorizontal = Mathf.Round(inputHorizontal);
 		if(Mathf.Abs(inputHorizontal) == 1)
 		{
-			StartCoroutine(changeDifficultySlider(-1*input));
+			StartCoroutine(changeDifficultySlider(inputHorizontal));
 		}
 		
 	}
@@ -106,7 +106,7 @@ public class MainMenu : MonoBehaviour {
 	
 	private IEnumerator changeMenuItem(float input)
 	{
-		if(!canChangeMenuItem) yield return null;
+		if(!canChangeMenuItem) yield break;
 		canChangeMenuItem = false;
 		
 		selectedButtonIndex += (int)input;
@@ -124,9 +124,8 @@ public class MainMenu : MonoBehaviour {
 	
 	private IEnumerator changeDifficultySlider(float input)
 	{
-		if(!canChangeDifficulty) yield return null;
+		if(!canChangeDifficulty) yield break;
 		canChangeDifficulty = false;
-		
 		float difficulty = aiSkill + input;
 		aiSkill = Mathf.Clamp(difficulty, 1.0f, 10.0f);
 		yield return new WaitForSeconds(0.2f);

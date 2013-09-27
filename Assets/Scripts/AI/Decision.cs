@@ -22,7 +22,7 @@ public class Decision : DecisionTreeNode {
 	
 	protected virtual bool ChanceForRightDecision()
 	{
-		return (Random.value <= difficulty);
+		return (Random.value <= Mathf.Clamp(difficulty, 0.5f, 1.0f));
 	}
 	
 	public override DecisionTreeNode makeDecision ()

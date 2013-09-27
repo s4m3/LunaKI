@@ -16,7 +16,7 @@ public class Action_ChargeHealth : Action {
 
 	public override bool canDoBoth (Action otherAction)
 	{
-		return false;
+		return (otherAction is Action_Shoot || otherAction is Action_MoveAndMelee);
 	}
 
 	public override bool isComplete ()

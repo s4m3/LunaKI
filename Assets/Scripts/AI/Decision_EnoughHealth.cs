@@ -10,7 +10,7 @@ public class Decision_EnoughHealth : Decision {
 		if(!trueNode) this.trueNode = new Decision_DistanceEnemy(self, enemy, difficulty);
 		if(!falseNode) this.falseNode = new Decision_EnoughEnergy(self, enemy, difficulty);
 		//is health high enough?
-		if(this.self.Health.currentValue > this.self.Health.max * 0.5 && ChanceForRightDecision())
+		if(this.self.Health.currentValue > this.self.Health.max * 0.5)
 			return trueNode;
 		else
 			return falseNode;
