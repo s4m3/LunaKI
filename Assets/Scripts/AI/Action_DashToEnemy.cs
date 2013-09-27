@@ -3,6 +3,8 @@ using System.Collections;
 
 public class Action_DashToEnemy : Action {
 	
+	private bool completion = false;
+	
 	public Action_DashToEnemy(AGPlayerController controller, int currentTime) : base(controller) 
 	{
 		priority = 10;
@@ -21,11 +23,12 @@ public class Action_DashToEnemy : Action {
 
 	public override bool isComplete ()
 	{
-		return false;
+		return completion;
 	}
 
 	public override void execute ()
 	{
 		controller.DashToEnemy();
+		completion = true;
 	}
 }
