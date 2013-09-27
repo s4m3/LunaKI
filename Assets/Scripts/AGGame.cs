@@ -293,14 +293,14 @@ public class AGGame : MonoBehaviour {
 			ChooseCharacters();	
 		} else if(mainMenu.gameMode == MainMenu.GameMode.Singleplayer)
 		{
-			SetupAIPlayer();
+			SetupAIPlayer(mainMenu.Difficulty());
 			ChooseCharacters();
 		}
 		//TODO: SOUND
 		m_SoundServer.m_AudioListenerPrefab.enabled = false;
 	}
 	
-	void SetupAIPlayer()
+	void SetupAIPlayer(float difficulty)
 	{
 		GameObject obj1 = (GameObject) GameObject.Instantiate(pathfinderPrefab);
 		pathfinder = obj1.GetComponent<Pathfinder>();
@@ -309,7 +309,7 @@ public class AGGame : MonoBehaviour {
 		pathfinder.Init();
 		pathfinder.text = textTest;
 		print (Players[0].Controller.pawn);
-		Players[Players.Length - 1].Controller.SetupAIController(Planet.gameObject, Players[0].Controller.pawn, pathfinder);
+		Players[Players.Length - 1].Controller.SetupAIController(Planet.gameObject, Players[0].Controller.pawn, pathfinder, difficulty);
 		
 		//Persist.serializeNodesToFile(pathfinder.Nodes, "nodes.dat");
 		

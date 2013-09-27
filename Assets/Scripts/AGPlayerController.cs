@@ -30,6 +30,7 @@ public class AGPlayerController : MonoBehaviour
 	
 	public bool isAIPlayer = false;
 	public bool hasAIOpponent = false;
+	public float difficulty;
 	public GameObject planet;
 	public AGPawn enemy;
 	public GameObject testObject;
@@ -41,12 +42,17 @@ public class AGPlayerController : MonoBehaviour
 	private List<Node> path;
 	private int currentPathID;
 	private int currentNodeID;
+	private bool pathComplete = true;
+	private float stuckTime = 0.0f;
 	
 	private Node closestToSun;
 	//if ai player is stuck...
 	private Vector3 lastPosition;
 	private int trials;
-	// Use this for initialization
+
+	private float reactionTime;
+	private float nextDecisionTime = 0.0f;
+	
 	void Start ()
 	{
 		AGGame.Instance.SetPlayerController (this);      
@@ -79,10 +85,11 @@ public class AGPlayerController : MonoBehaviour
 	
 	public void SetupDecisionMaking()
 	{
-		//TODO: set one pawn as enemy
-		this.rootDecision = new Decision(this.pawn, this.enemy);
+		//TODO: set reaction time 0.3 seconds for diff=1, 2 seconds for diff = 0.1, calculate scale
+		reactionTime = 1.3f + 1f - this.difficulty;
+		this.rootDecision = new Decision(this.pawn, this.enemy, this.difficulty);
 	}
-	public void SetupAIController(GameObject planet, AGPawn enemy, Pathfinder pathfinder)
+	public void SetupAIController(GameObject planet, AGPawn enemy, Pathfinder pathfinder, float difficulty)
 	{
 		this.isAIPlayer = true;
 		this.planet = planet;
@@ -90,6 +97,7 @@ public class AGPlayerController : MonoBehaviour
 		this.pathfinder = pathfinder;
 		this.currentPathID = -1;
 		this.trials = 0;
+		this.difficulty = difficulty;
 
 
 	}
@@ -152,7 +160,6 @@ public class AGPlayerController : MonoBehaviour
 		if(isAIPlayer) 
 		{
 			this.enemy = AGGame.Instance.GetEnemy();
-			print ("jetzt enemz" + enemy);
 			SetupDecisionMaking();
 			actionManager = new ActionManager(this);
 			actionManager.ResetActionManager();
@@ -173,7 +180,6 @@ public class AGPlayerController : MonoBehaviour
 	
 	private ActionDecision.ActionDecisionType MakeDecision()
 	{
-		//if(rootDecision == null) return ActionDecision.ActionDecisionType.None;
 		newDecision = rootDecision.makeDecision();
 		return ((newDecision as ActionDecision).actionType);
 	}
@@ -185,7 +191,7 @@ public class AGPlayerController : MonoBehaviour
 		
 		if(isAIPlayer) {
 			//MoveAIPlayer();
-			DoAIAction();
+			MakeNewDecision();
 		}	
 		else
 			CheckInputs ();
@@ -320,10 +326,12 @@ public class AGPlayerController : MonoBehaviour
 		if(action is AGAction_Shot) {
 			//spread shots to make imperfect
 			lookDirection.Normalize();
-			Tools.RandomizeVector(ref lookDirection, 0.4f);
+			float randomizeFactor = Mathf.Clamp(1 - difficulty, 0, 0.8f);
+			Tools.RandomizeVector(ref lookDirection, randomizeFactor);
 		}
 		ExecuteMovement(movementDirection, lookDirection);
-		ActivateAction(action);
+		if(action.bHoldButton) action.ReleaseButton();
+		else ActivateAction(action);
 	}
 	
 	public void MoveAIPlayer()
@@ -342,9 +350,10 @@ public class AGPlayerController : MonoBehaviour
 			path = pathfinder.path;
 			currentPathID = pathfinder.pathID;
 		}
-		if(path == null || path.Count < 1) {
+		if(path == null || path.Count < 1 || pathComplete) {
 			//print ("stuck here 2");
 			FindNewPath();
+			pathComplete = false;
 			return;
 		}
 		
@@ -356,7 +365,7 @@ public class AGPlayerController : MonoBehaviour
 	{
 		if(pathfinder.isFindingPath) 
 		{
-			MoveToSun();
+			//MoveToSun();
 			return;
 		}
 		closestToSun = null;
@@ -364,21 +373,28 @@ public class AGPlayerController : MonoBehaviour
 		//print ("path count:" + path.Count + " with pathID:"+pathfinder.pathID);
 		if(currentNodeID > path.Count - 1)
 		{
-			//print ("path completed: finding new path");
-			FindNewPath();
+			print ("path completed, node id: " + currentNodeID);
+			pathComplete = true;
 			return; 
 		}
 		Vector3 target = path[currentNodeID].position;
 		Vector3 position = pawn.transform.position;
+		
 		if(areCloseTogether(position, target, 2f)) 
 		{
 			currentNodeID++;
 			//print ("are close");
 			return;
 		}
-		if(areFarAway(position, target, 10f))
+//		if(areFarAway(position, target, 10f))
+//		{
+//			ActivateAction (Action_Dash);
+//		}
+		
+		if(areFarAway(path[path.Count - 1].position, enemy.transform.position, 5))
 		{
-			ActivateAction (Action_Dash);
+			print ("enemy too far away from target");
+			pathComplete = true;
 		}
 
 		Vector3 projection2 = target - position;
@@ -386,9 +402,11 @@ public class AGPlayerController : MonoBehaviour
 		Vector3 InputVectorMovement = projection2.normalized;
 		Vector3 InputVectorLook = new Vector3 (0, 0, 0);
 		
-		if(position == lastPosition) 
+		if(position == lastPosition && Time.time > stuckTime) 
 		{
 			currentNodeID++;
+			//only increase if character is stuck longer than a second
+			stuckTime = Time.time + 1f;
 			//print ("stuck here 3");
 			InputVectorMovement *= -1;
 //			InputVectorMovement = new Vector3(-1f, -1f, 0);
@@ -441,6 +459,17 @@ public class AGPlayerController : MonoBehaviour
 		ExecuteAIAction(enemyDirection, enemyDirection, Action_Dash); 
 	}
 	
+	public void MeleeAtEnemy()
+	{
+		Vector3 enemyDirection = enemy.transform.position - pawn.transform.position;
+		if(areCloseTogether(enemy.transform.position, pawn.transform.position, Action_Melee.Range))
+		{
+			ExecuteAIAction(Vector3.zero, enemyDirection, Action_Melee);
+		} else {
+			ExecuteAIAction(enemyDirection, enemyDirection, Action_Melee);
+		}
+	}
+	
 	public bool IsCloseToEnemy()
 	{
 		return areCloseTogether(pawn.transform.position, enemy.transform.position, 5f);
@@ -468,11 +497,16 @@ public class AGPlayerController : MonoBehaviour
 		return ((position - target).magnitude > distance);	
 	}
 	
-	void DoAIAction()
+	void MakeNewDecision()
 	{
-		actionManager.scheduleAction(actionManager.createAction(MakeDecision()));
+		//TODO: Only schedule every half a second
+		if(Time.time > nextDecisionTime) 
+		{
+			actionManager.scheduleAction(actionManager.createAction(MakeDecision()));
+			nextDecisionTime = Time.time + reactionTime;
+		}
+		
 		actionManager.execute();
-		//Maybe return execution type back to player controller and execute here
 	}
 	
 	void CheckInputs () // FIXME TODO Rewrite for use with Update !!

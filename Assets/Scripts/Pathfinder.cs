@@ -81,7 +81,7 @@ public class Pathfinder : MonoBehaviour {
 	        if (findPathJob.Update())
 	        {
 				//print path
-				if(AGGame.Instance.DebugMode)
+				if(AGGame.Instance.DebugMode && false)
 				{
 					for(int i=0; i<path.Count; i++)
 					{

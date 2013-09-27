@@ -16,7 +16,8 @@ public class Action_MoveToEnemy : Action {
 
 	public override bool canDoBoth (Action otherAction)
 	{
-		return true;
+		if(otherAction.GetType() == this.GetType()) return false;
+		else return true;
 	}
 
 	public override bool isComplete ()

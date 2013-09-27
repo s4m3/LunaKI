@@ -64,7 +64,7 @@ public class ActionManager : Object {
 				{
 					queue.Remove(currAction);
 					active.Add(currAction);
-					Debug.Log("added action");
+					Debug.Log("added action: " + currAction.GetType().ToString());
 				}
 			}
 			

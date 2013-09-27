@@ -16,15 +16,21 @@ public class MainMenu : MonoBehaviour {
 	public enum GameMode {None, Multiplayer, Singleplayer}
 	public GameMode gameMode;
 	public bool isMuted;
-	private float input;
 	private bool canChangeMenuItem = true;
+	private bool canChangeDifficulty = true;
 	private int selectedButtonIndex = 0;
+	private float aiSkill = 10f;
 	private bool debug = true;
 	
 	private string[] menuOptions = new string[5];
 	
 	private Vector2 screenRes;//TODO GUI-Manager zum speichern solcher werte
 	private bool creditsVisible;
+	
+	public float Difficulty()
+	{
+		return aiSkill / 10.0f;
+	}
 	
 	public bool isDebugMode()
 	{
@@ -52,11 +58,20 @@ public class MainMenu : MonoBehaviour {
 			if(canChangeMenuItem) StartCoroutine(activateMenuItem());
 		}
 		
-		input = Mathf.Abs(Input.GetAxis("Vertical_p1")) >= Mathf.Abs(Input.GetAxis("Vertical_p2")) ? Input.GetAxis("Vertical_p1") : Input.GetAxis("Vertical_p2");
+		float input = Mathf.Abs(Input.GetAxis("Vertical_p1")) >= Mathf.Abs(Input.GetAxis("Vertical_p2")) ? Input.GetAxis("Vertical_p1") : Input.GetAxis("Vertical_p2");
 		input = Mathf.Round(input);
 		if((input == 1 || input == -1) && canChangeMenuItem) 
 		{
 			StartCoroutine(changeMenuItem(-1*input));
+		}
+		
+		if(selectedButtonIndex != 1) return;
+		//otherwise check for change for slider
+		float inputHorizontal = Mathf.Abs(Input.GetAxis("Horizontal_p1")) >= Mathf.Abs(Input.GetAxis("Horizontal_p2")) ? Input.GetAxis("Horizontal_p1") : Input.GetAxis("Horizontal_p2");
+		inputHorizontal = Mathf.Round(inputHorizontal);
+		if(Mathf.Abs(inputHorizontal) == 1)
+		{
+			StartCoroutine(changeDifficultySlider(-1*input));
 		}
 		
 	}
@@ -105,6 +120,17 @@ public class MainMenu : MonoBehaviour {
 		yield return new WaitForSeconds(0.3f);
 		canChangeMenuItem = true;
 
+	}
+	
+	private IEnumerator changeDifficultySlider(float input)
+	{
+		if(!canChangeDifficulty) yield return null;
+		canChangeDifficulty = false;
+		
+		float difficulty = aiSkill + input;
+		aiSkill = Mathf.Clamp(difficulty, 1.0f, 10.0f);
+		yield return new WaitForSeconds(0.2f);
+		canChangeDifficulty = true;
 	}
 
 
@@ -207,6 +233,20 @@ public class MainMenu : MonoBehaviour {
 		GUILayout.EndArea();
 		
 		if(creditsVisible) showCredits();
+		
+		if(selectedButtonIndex == 1)
+		{
+			GUI.BeginGroup(new Rect (screenRes.x * 0.1f, screenRes.y * 0.5f, 400, 500));
+			string difficultyText = aiSkill < 2f ? "very easy" : aiSkill < 3f ? "easy" : aiSkill < 5.5f ? "normal" : aiSkill < 7f ? "hard" : aiSkill < 8.5f ? "very hard" : "expert";
+			
+			GUI.Label(new Rect(0,0,200,80), "Difficulty: ", buttonStyle);
+			GUI.Label(new Rect(150,0,200,80), difficultyText, buttonStyle);
+			GUI.Label(new Rect(0,50,200,80), "Value: ", buttonStyle);
+			GUI.Label(new Rect(150,50,200,80), Mathf.RoundToInt(aiSkill).ToString(), buttonStyle);
+			aiSkill = GUI.HorizontalSlider(new Rect (0, 130, 400, 80), aiSkill, 1f, 10.0f);
+			GUI.EndGroup();
+		}
+		
 		
 		GUI.FocusControl(menuOptions[selectedButtonIndex]);
 	}
