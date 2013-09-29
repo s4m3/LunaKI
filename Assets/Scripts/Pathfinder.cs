@@ -29,7 +29,7 @@ public class Pathfinder : MonoBehaviour {
 	public GameObject text;
 	public GameObject nodeSphere;
 	
-	private bool debug = false;
+	public bool turnOnGUI = false;
 	
 	public static Pathfinder Instance
     {
@@ -49,7 +49,6 @@ public class Pathfinder : MonoBehaviour {
 	public void Init () {
 		pathID = 0;
 		//are there nodes already stored?
-		//TODO: as coroutine... oder ganzes init als coroutine
 		LoadNodesFromFileAndConvert();
 		if(Nodes.Count == 0)
 		{
@@ -80,8 +79,8 @@ public class Pathfinder : MonoBehaviour {
 	    {
 	        if (findPathJob.Update())
 	        {
-				//print path
-				if(AGGame.Instance.DebugMode && false)
+				//print path nodes as text
+				if(AGGame.Instance.DebugMode)
 				{
 					for(int i=0; i<path.Count; i++)
 					{
@@ -100,16 +99,12 @@ public class Pathfinder : MonoBehaviour {
 	
 	public Node FindNodeToPositionWithKDTree(Vector3 target) 
 	{
-		//float time = Time.time;
 		int num = kdTree.FindNearest(target);
-		Debug.Log("kdTree: found node with id: " + Nodes[num].id + "and distance: " + Vector3.Distance(target, Nodes[num].position) );
-		//Debug.Log ("Time needed:" + (Time.time - time));
 		return Nodes[num];
 	}
 	
 	public Node FindNodeToPosition(Vector3 position)
 	{
-		float time = Time.time;
 		float lowest = float.MaxValue;
 		float current = float.MaxValue;
 		int id = -1;
@@ -127,8 +122,6 @@ public class Pathfinder : MonoBehaviour {
 	            	{
 	                	return nd.id == id;
 	            	});
-		print ("standard: nearest node: " + id + " with distance: " +lowest );
-		Debug.Log ("Time needed:" + (Time.time - time));
 		return nodeToFind;
 	}
 	
@@ -146,7 +139,6 @@ public class Pathfinder : MonoBehaviour {
 		string[] arr;
 		string[] posArr;
 		Node node;
-		print("stringlist count:" + stringList.Count);
 		foreach(string current in stringList)
 		{
 			node = new Node();
@@ -168,7 +160,6 @@ public class Pathfinder : MonoBehaviour {
 		
 		
 		//after creating all nodes, insert successors
-		//print ("successors for " + Nodes.Count);
 		foreach(Node n in Nodes)
 		{
 			Node nodeToFind;
@@ -184,12 +175,11 @@ public class Pathfinder : MonoBehaviour {
 					n.Successors.Add(nodeToFind);
 				}
 			}
-			//print ("!!!!!show");
 			//n.ShowNode();
 		}
 		//DrawSuccessors(Nodes);
 	}
-	//DEBUG+++++++++++++++++++++
+	///////////DEBUG///////////
 	private void DrawLines(List<Node> nodes)
 	{
 		for(int l=0; l<nodes.Count-1; l++)
@@ -273,7 +263,7 @@ public class Pathfinder : MonoBehaviour {
     	findPathJob.Start();
 	}
 
-	
+	//NOT IN USE//
 	private float haversineDist(Waypoint point1, Waypoint point2)
 	{
 		float dLat = Mathf.Deg2Rad * (point2.inclination - point1.inclination);
@@ -290,7 +280,7 @@ public class Pathfinder : MonoBehaviour {
 	
 
 	
-	//GUI//////////////////	FOR DEBUG PURPOSES ONLY
+	///////////GUI//////////////////	FOR DEBUG PURPOSES ONLY
 	void UpdateAllNodes()
 	{
 		deletedNodesIDs = new List<int>();
@@ -311,15 +301,10 @@ public class Pathfinder : MonoBehaviour {
 			
 			Node nodeToDelete = Nodes.Find(delegate(Node nodeToFind)
             	{
-					//if(nodeToFind.id == delID) print ("found node with id " + delID);
                 	return nodeToFind.id == delID;
             	});
 			Destroy(nodeToDelete.ns);
-//			print ("count1: "+Nodes.Count);
-//			print ("remove node with id:" + nodeToDelete.id);
 			Nodes.RemoveAll((Node i) => i.id == delID);
-			//Nodes.Remove(nodeToDelete);
-			//print ("count2: "+Nodes.Count);
 			Destroy(nodeToDelete);
 			
 		}
@@ -337,7 +322,7 @@ public class Pathfinder : MonoBehaviour {
 	
 	void OnGUI()
 	{
-		if(!debug) return;
+		if(!turnOnGUI) return;
 		
 		if(GUI.Button (new Rect(0, 0, 120, 40), "update all nodes"))
 		{
@@ -353,6 +338,5 @@ public class Pathfinder : MonoBehaviour {
 		{
 			SaveAllNodes();
 		}
-		//GUI.Label(new Rect(100, 100, 500, 400), loadingPercentage.ToString()); 
 	}
 }

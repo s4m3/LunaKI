@@ -10,9 +10,19 @@ public class Decision_EnoughEnergy : Decision {
 		if(!trueNode) this.trueNode = new Decision_InDarkZone(self, enemy, difficulty);
 		if(!falseNode) this.falseNode = new Decision_DistanceEnemy(self, enemy, difficulty);
 		//has max ultimate energy?
-		if(this.self.Energy.currentValue == this.self.Energy.max && ChanceForRightDecision())
-			return trueNode;
+		if(this.self.Energy.currentValue == this.self.Energy.max)
+		{
+			if(ChanceForRightDecision())
+				return trueNode;
+			else
+				return falseNode;
+		}
 		else
-			return falseNode;
+		{
+			if(ChanceForRightDecision())
+				return falseNode;
+			else
+				return trueNode;
+		}
 	}
 }

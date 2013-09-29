@@ -10,9 +10,19 @@ public class Decision_InDarkZone : Decision {
 		if(!trueNode) this.trueNode = new ActionDecision(ActionDecision.ActionDecisionType.ActivateUltimate);
 		if(!falseNode) this.falseNode = new Decision_DistanceEnemy(self, enemy, difficulty);
 		//his in Dream/Dark Zone?
-		if(this.self.CurrentPlayerState == AGActor.LightState.Dream && ChanceForRightDecision())
-			return trueNode;
+		if(this.self.CurrentPlayerState == AGActor.LightState.Dream)
+		{
+			if(ChanceForRightDecision())
+				return trueNode;
+			else
+				return falseNode;
+		}
 		else
-			return falseNode;
+		{
+			if(ChanceForRightDecision())
+				return falseNode;
+			else
+				return trueNode;
+		}
 	}
 }

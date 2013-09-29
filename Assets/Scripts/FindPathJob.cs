@@ -54,7 +54,6 @@ public class FindPathJob : ThreadedJob
                 	return nd.id == nodeWithLowestCost.id;
             	});
 		}
-		Debug.Log("loops needed: " +loop);
 		closedList.Add(currentNode);
 		return getPath(currentNode, closedList);
 	}
@@ -73,8 +72,7 @@ public class FindPathJob : ThreadedJob
 			successor.Cost = totalCost;
 			successor.DistanceToGoal = euclideanDist(successor, endNode);
 			successor.parentID = expandedNode.id;
-			//if(listContainsNode(openList, successor))
-				//update cost?
+
 			openList.Add(successor);
 		}
 	}
@@ -97,13 +95,11 @@ public class FindPathJob : ThreadedJob
 	private List<Node> getPath(Node lastNode, List<Node> closedList) {
 		List<Node> path = new List<Node>();
 		path.Add(lastNode);
-		//print ("parentid:"+lastNode.parentID);
 		while(lastNode.parentID != -1){
 			lastNode = closedList.Find(delegate(Node nd)
             	{
                 	return nd.id == lastNode.parentID;
             	});
-			//print ("lastnode id:" + lastNode.id);
 			path.Add(lastNode);
 		}
 		path.Reverse();

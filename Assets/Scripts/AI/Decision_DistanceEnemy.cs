@@ -10,9 +10,19 @@ public class Decision_DistanceEnemy : Decision {
 		if(!trueNode) this.trueNode = new ActionDecision(ActionDecision.ActionDecisionType.MoveToEnemyAndMelee);
 		if(!falseNode) this.falseNode = new Decision_ShotsLeft(self, enemy, difficulty);
 		//is enemy close?
-		if(Vector3.Distance(self.transform.position, enemy.transform.position) < 1.7f && ChanceForRightDecision())
-			return trueNode;
+		if(Vector3.Distance(self.transform.position, enemy.transform.position) < 1.7f) 
+		{
+			if(ChanceForRightDecision())
+				return trueNode;
+			else
+				return falseNode;
+		}
 		else
-			return falseNode;
+		{
+			if(ChanceForRightDecision())
+				return falseNode;
+			else
+				return trueNode;
+		}
 	}
 }

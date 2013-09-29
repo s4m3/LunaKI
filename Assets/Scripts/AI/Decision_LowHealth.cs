@@ -10,9 +10,19 @@ public class Decision_LowHealth : Decision {
 		if(!trueNode) this.trueNode = new ActionDecision(ActionDecision.ActionDecisionType.ChargeHealth);
 		if(!falseNode) this.falseNode = new Decision_EnemyLowHealth(self, enemy, difficulty);
 		//if health is low
-		if(this.self.Health.currentValue < this.self.Health.max * 0.4 && ChanceForRightDecision())
-			return trueNode;
+		if(this.self.Health.currentValue < this.self.Health.max * 0.4)
+		{
+			if(ChanceForRightDecision())
+				return trueNode;
+			else
+				return falseNode;
+		}
 		else
-			return falseNode;
+		{
+			if(ChanceForRightDecision())
+				return falseNode;
+			else
+				return trueNode;
+		}
 	}
 }

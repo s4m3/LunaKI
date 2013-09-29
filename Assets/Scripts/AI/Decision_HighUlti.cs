@@ -10,9 +10,19 @@ public class Decision_HighUlti : Decision {
 		if(!trueNode) this.trueNode = new ActionDecision(ActionDecision.ActionDecisionType.MoveToEnemy);
 		if(!falseNode) this.falseNode = new ActionDecision(ActionDecision.ActionDecisionType.ChargeEnergy);
 		//if self has enough ultimate energy
-		if(this.self.Energy.currentValue > this.self.Energy.max * 0.85 && ChanceForRightDecision())
-			return trueNode;
+		if(this.self.Energy.currentValue > this.self.Energy.max * 0.85)
+		{
+			if(ChanceForRightDecision())
+				return trueNode;
+			else
+				return falseNode;
+		}
 		else
-			return falseNode;
+		{
+			if(ChanceForRightDecision())
+				return falseNode;
+			else
+				return trueNode;
+		}
 	}
 }

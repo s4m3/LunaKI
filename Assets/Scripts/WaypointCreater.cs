@@ -48,22 +48,17 @@ public class WaypointCreater : MonoBehaviour {
 		Vector3[] normals = mesh.normals;
 		Vector3[] vertices = mesh.vertices;
 		Vector3 currentpos = Vector3.zero;
-		//print (mesh.vertices.Length);
 		int hitCount = 0;
 		RaycastHit hit;
 		for(int i=0; i<normals.Length; i++)
 		{
 			currentpos = vertices[i] + normals[i];
 			if(!Physics.SphereCast(vertices[i], 1f, currentpos, out hit, 200.0f)){
-			//if(!Physics.Raycast(vertices[i], normals[i], 30.0f)){	
-				//Instantiate(testObject, currentpos, testObject.transform.rotation);
 				waypoints.Add(currentpos);
 			} else {
 				hitCount++;
-				//Instantiate(testObjectHit, vertices[i], testObjectHit.transform.rotation);
 			}
 		}
-		//print (hitCount);
 		return waypoints;
 	}
 	

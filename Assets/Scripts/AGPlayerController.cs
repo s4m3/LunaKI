@@ -33,7 +33,7 @@ public class AGPlayerController : MonoBehaviour
 	public float difficulty;
 	public GameObject planet;
 	public AGPawn enemy;
-	public GameObject testObject;
+
 	private Decision rootDecision;
 	private DecisionTreeNode newDecision;
 	private ActionManager actionManager;
@@ -43,14 +43,16 @@ public class AGPlayerController : MonoBehaviour
 	private int currentPathID;
 	private int currentNodeID;
 	private bool pathComplete = true;
-	private float stuckTime = 0.0f;
 	
 	private Node closestToSun;
+	
 	//if ai player is stuck...
 	private Vector3 lastPosition;
-	private int trials;
-
+	private float stuckTime = 0.0f;
+	
+	//reaction Time
 	private float reactionTime;
+	public const float ReactionTimeMin = 1.3f;
 	private float nextDecisionTime = 0.0f;
 	
 	void Start ()
@@ -66,7 +68,6 @@ public class AGPlayerController : MonoBehaviour
 			GameObject obj = (GameObject)GameObject.Instantiate (playerMenuPrefab);
 			playerMenu = obj.GetComponent<PlayerMenu> ();
 			playerMenu.SetPlayer (this);
-			//if(hasAIOpponent) playerMenu.SetOffset(Vector2.zero);
           
 		}
 	}
@@ -81,25 +82,6 @@ public class AGPlayerController : MonoBehaviour
 			charChoiceMenu = obj.GetComponent<CharacterChoiceMenu>();
 			charChoiceMenu.SetPlayer(this);
 		}
-	}
-	
-	public void SetupDecisionMaking()
-	{
-		//TODO: set reaction time 0.3 seconds for diff=1, 2 seconds for diff = 0.1, calculate scale
-		reactionTime = 1.3f + 1f - this.difficulty;
-		this.rootDecision = new Decision(this.pawn, this.enemy, this.difficulty);
-	}
-	public void SetupAIController(GameObject planet, AGPawn enemy, Pathfinder pathfinder, float difficulty)
-	{
-		this.isAIPlayer = true;
-		this.planet = planet;
-		this.enemy = enemy;
-		this.pathfinder = pathfinder;
-		this.currentPathID = -1;
-		this.trials = 0;
-		this.difficulty = difficulty;
-
-
 	}
 	
 	public void SetCharacterChoiceBackgroundPlanet(Transform basePlanet, AGSpawnPoint[] spawnpoints)
@@ -122,8 +104,6 @@ public class AGPlayerController : MonoBehaviour
 		AGGame.Instance.SetPlayer (PlayerID, this);
 		AGCam.CameraRig.gameObject.GetComponent<Camera> ().rect = new Rect (AGGame.Get2DCameraOffset (this).x, AGGame.Get2DCameraOffset (this).y, 0.5f, 1); 
 
-		//(playerMenu);
-		
 		m_KM_PlayerID = PlayerID; // FIXME: Find right place for this line ...
 		m_KM_CurrentPlayerID = m_KM_PlayerID;
 		m_KM_MaxPlayerID = m_KM_PlayerID + 1;
@@ -135,35 +115,24 @@ public class AGPlayerController : MonoBehaviour
 	{
 		pawn = p;
 		pawn.Player = this;
-
 		pawn.SetLightZoneStats (true);
         pawn.SetLightZoneMesh(false);
-
-		// FIXME: do something with renderer, subrenderer, really add color? 
-//		pawn.mesh.renderer.material = info.PlayerMaterial;
-//		var renderers = pawn.mesh.GetComponentsInChildren<UnityEngine.Renderer> ();
-//		foreach (var ren in renderers) {
-//			ren.material.color += info.PlayerMaterial.color;
-//		}
 		pawn.AimHelp.renderer.material = info.AimHelpMaterial;
-    
 		pawn.AimHelp.layer = 8 + PlayerID;
-		if (p.MyProjector != null) {
-			//Debug.Log ("Setting Projector Material Player " + PlayerID);
+		if (p.MyProjector != null) 
+		{
 			p.MyProjector.material = info.PlayerProjectorMaterial;
 		}
 
 		Action_Shot.SetShotDisplay ();
 
 		AGCam.SetViewTarget (pawn);		
-		print ("setting it up");
 		if(isAIPlayer) 
 		{
 			this.enemy = AGGame.Instance.GetEnemy();
 			SetupDecisionMaking();
 			actionManager = new ActionManager(this);
-			actionManager.ResetActionManager();
-						
+			actionManager.ResetActionManager();			
 		}
 	}
 	
@@ -189,13 +158,10 @@ public class AGPlayerController : MonoBehaviour
 		if (!bIsControllable)
 			return;
 		
-		if(isAIPlayer) {
-			//MoveAIPlayer();
+		if(isAIPlayer)
 			MakeNewDecision();
-		}	
 		else
 			CheckInputs ();
-		
 	}
 	
 	void LateUpdate ()
@@ -222,7 +188,6 @@ public class AGPlayerController : MonoBehaviour
 		if (hasThisPlayer (Input.GetButton ("KM_Shot")) || 
 			Mathf.Abs (Input.GetAxisRaw ("Fire1_p" + PlayerID)) > 0.5f || 
 			Input.GetButton("FireA_p"+PlayerID)){
-			// Debug.Break();
 			ActivateAction (Action_Shot);
 		} else if (Action_Shot.bHoldButton) {
 			Action_Shot.ReleaseButton ();
@@ -235,7 +200,6 @@ public class AGPlayerController : MonoBehaviour
 		if (isThisPlayer () && Input.GetButtonDown ("KM_SwitchKM")) {
 			m_KM_UseKM = !m_KM_UseKM;
 		}
-
 
 		if (hasThisPlayer (Input.GetButton ("KM_Dash")) ||
 			Input.GetButton ("Fire2_p" + PlayerID) || 
@@ -268,13 +232,10 @@ public class AGPlayerController : MonoBehaviour
 		float vertical = Input.GetAxis ("Vertical_p" + PlayerID);
 		float verticalLook = -Input.GetAxis ("VerticalLook_p" + PlayerID);
 		if (hasThisPlayer (true)) {
-//			Print.Log(Screen.width + " x "  + Screen.height);
 			float ycenter = Screen.height / 2.0f;
 			float xcenter = Screen.width / 2.0f;
 			float xPlaceCenter = xcenter / 2.0f;
 			float xPlace = (PlayerID - 1) * xcenter + xPlaceCenter; // ||  x  |  o  ||
-//			Print.Log(xcenter + " " + xPlaceCenter + " " + xPlace + "    " + Input.mousePosition.x);
-//			Print.Log (Input.mousePosition);
 			horizontal += Input.GetAxis ("KM_Horizontal"); // A-D
 			horizontalLook += Input.mousePosition.x - xPlace; // Input.GetAxis ("KM_HorizontalLook"); // Mouse
 			vertical += Input.GetAxis ("KM_Vertikal"); // W-S
@@ -291,7 +252,6 @@ public class AGPlayerController : MonoBehaviour
 	
 	void ExecuteMovement(Vector3 InputVectorMovement, Vector3 InputVectorLook)
 	{
-		//if(isAIPlayer)Debug.Log(InputVectorLook);
 		if (PlayerCanMovePawn ()) {
 			float MovementInputPercent = Mathf.Clamp ((InputVectorMovement.magnitude - MovementInputDeadZone), 0, 1) / (1 - MovementInputDeadZone);
 			InputVectorMovement *= MovementInputPercent;
@@ -303,7 +263,6 @@ public class AGPlayerController : MonoBehaviour
 			}
 			pawn.UpdateMoveDirection (Tools.CameraVectorToObject (MoveDirection, pawn.gameObject, AGCam));
 			Debug.DrawRay (pawn.transform.position, Tools.CameraVectorToObject (MoveDirection, pawn.gameObject, AGCam), Color.cyan); 
-		
 		}
 	
 		if (InputVectorLook.magnitude < MovementInputDeadZone)
@@ -319,16 +278,30 @@ public class AGPlayerController : MonoBehaviour
 		pawn.SetLookDirection (Tools.CameraVectorToObject (LookDirection, pawn.gameObject, AGCam));	
 	}
 	
+	//////////AI METHODS//////////
+	public void SetupDecisionMaking()
+	{
+		reactionTime = ReactionTimeMin + 1f - this.difficulty;
+		this.rootDecision = new Decision(this.pawn, this.enemy, this.difficulty);
+	}
 	
+	public void SetupAIController(GameObject planet, AGPawn enemy, Pathfinder pathfinder, float difficulty)
+	{
+		this.isAIPlayer = true;
+		this.planet = planet;
+		this.enemy = enemy;
+		this.pathfinder = pathfinder;
+		this.currentPathID = -1;
+		this.difficulty = difficulty;
+	}
+	void FindNewPath()
+	{
+		currentNodeID = 0;
+		pathfinder.CalculateNewPath(pawn.transform.position, enemy.transform.position);
+	}
 	
 	public void ExecuteAIAction(Vector3 movementDirection, Vector3 lookDirection, AGAction action)
 	{
-		if(action is AGAction_Shot) {
-			//spread shots to make imperfect
-			lookDirection.Normalize();
-			float randomizeFactor = Mathf.Clamp(1 - difficulty, 0, 0.8f);
-			Tools.RandomizeVector(ref lookDirection, randomizeFactor);
-		}
 		ExecuteMovement(movementDirection, lookDirection);
 		if(action.bHoldButton) action.ReleaseButton();
 		else ActivateAction(action);
@@ -336,94 +309,60 @@ public class AGPlayerController : MonoBehaviour
 	
 	public void MoveAIPlayer()
 	{
-		//print("path id:" + currentPathID);
-		//print ("actual path id:" + pathfinder.pathID);
-//		if(areCloseTogether(pawn.transform.position, enemy.transform.position, 5f))
-//		{
-//			//print ("is close to enemy");
-//			//ExecuteAIAction(new Vector3(0,0,0), (enemy.transform.position - pawn.transform.position), Action_Shot);
-//			return;
-//		}
 		if(currentPathID != pathfinder.pathID)
 		{
-			//print ("stuck here 1");
 			path = pathfinder.path;
 			currentPathID = pathfinder.pathID;
 		}
-		if(path == null || path.Count < 1 || pathComplete) {
-			//print ("stuck here 2");
+		if(path == null || path.Count < 1 || pathComplete) 
+		{
 			FindNewPath();
 			pathComplete = false;
 			return;
 		}
-		
-		MoveAlongPath();
-			
+		MoveAlongPath();		
 	}
 	
 	void MoveAlongPath() 
 	{
-		if(pathfinder.isFindingPath) 
-		{
-			//MoveToSun();
-			return;
-		}
+		if(pathfinder.isFindingPath) return;
+		
+		//if path was found reset the sun node to recalculate in the next iteration
 		closestToSun = null;
-		//print ("currentnodeid:" + currentNodeID + " with pathID:" + currentPathID);
-		//print ("path count:" + path.Count + " with pathID:"+pathfinder.pathID);
 		if(currentNodeID > path.Count - 1)
 		{
-			print ("path completed, node id: " + currentNodeID);
 			pathComplete = true;
 			return; 
 		}
+		
 		Vector3 target = path[currentNodeID].position;
 		Vector3 position = pawn.transform.position;
-		
 		if(areCloseTogether(position, target, 2f)) 
 		{
 			currentNodeID++;
-			//print ("are close");
 			return;
 		}
-//		if(areFarAway(position, target, 10f))
-//		{
-//			ActivateAction (Action_Dash);
-//		}
 		
 		if(areFarAway(path[path.Count - 1].position, enemy.transform.position, 5))
 		{
-			print ("enemy too far away from target");
 			pathComplete = true;
 		}
 
 		Vector3 projection2 = target - position;
+		
+		//DEBUG PURPOSE
 		Debug.DrawRay (position, projection2 * 5, Color.white);
+		
 		Vector3 InputVectorMovement = projection2.normalized;
 		Vector3 InputVectorLook = new Vector3 (0, 0, 0);
 		
 		if(position == lastPosition && Time.time > stuckTime) 
 		{
 			currentNodeID++;
-			//only increase if character is stuck longer than a second
+			//only move to next node if character is stuck longer than a second
 			stuckTime = Time.time + 1f;
-			//print ("stuck here 3");
 			InputVectorMovement *= -1;
-//			InputVectorMovement = new Vector3(-1f, -1f, 0);
-//			InputVectorLook = new Vector3(-10, -1, 0);
-//			ExecuteMovement(InputVectorMovement, InputVectorLook);
-//			ActivateAction (Action_Dash);
-			//FindNewPath();
 		}
-//		if(trials > 4)
-//		{
-//			InputVectorMovement *= -1;
-//			FindNewPath();
-//			print ("finding new path because cannot shoot through");
-//			
-//			return;
-//		}
-
 
 		ExecuteMovement(InputVectorMovement, InputVectorLook);
 		lastPosition = pawn.transform.position;
@@ -431,7 +370,6 @@ public class AGPlayerController : MonoBehaviour
 	
 	public void MoveToSun()
 	{
-		//print ("Moving to the sun");
 		if(!closestToSun) {
 			int num = pathfinder.kdTree.FindNearest(AGGame.Instance.Sun.transform.position);
 			closestToSun = pathfinder.Nodes[num];
@@ -470,22 +408,21 @@ public class AGPlayerController : MonoBehaviour
 		}
 	}
 	
+	public void Shoot()
+	{
+		Vector3 lookDirection = (enemy.transform.position - pawn.transform.position);
+		//spread shots to make shooting imperfect
+		lookDirection.Normalize();
+		float randomizeFactor = Mathf.Clamp(1 - difficulty, 0, 0.8f);
+		Tools.RandomizeVector(ref lookDirection, randomizeFactor);
+		ExecuteAIAction(new Vector3(0,0,0), lookDirection, Action_Shot);
+	}
+	
+	//public method for action manager
 	public bool IsCloseToEnemy()
 	{
 		return areCloseTogether(pawn.transform.position, enemy.transform.position, 5f);
 	}
-	
-	public void Shoot()
-	{
-		ExecuteAIAction(new Vector3(0,0,0), (enemy.transform.position - pawn.transform.position), Action_Shot);
-	}
-	
-	void FindNewPath()
-	{
-		currentNodeID = 0;
-		pathfinder.CalculateNewPath(pawn.transform.position, enemy.transform.position);
-	}
-	
 	
 	bool areCloseTogether(Vector3 position, Vector3 target, float distance) 
 	{
@@ -499,7 +436,6 @@ public class AGPlayerController : MonoBehaviour
 	
 	void MakeNewDecision()
 	{
-		//TODO: Only schedule every half a second
 		if(Time.time > nextDecisionTime) 
 		{
 			actionManager.scheduleAction(actionManager.createAction(MakeDecision()));
@@ -508,8 +444,10 @@ public class AGPlayerController : MonoBehaviour
 		
 		actionManager.execute();
 	}
+	//////////AI METHODS END//////////
 	
-	void CheckInputs () // FIXME TODO Rewrite for use with Update !!
+	
+	void CheckInputs () 
 	{
 		controlButtons ();
 		controlAxis ();
@@ -541,6 +479,7 @@ public class AGPlayerController : MonoBehaviour
 			Destroy(playerInterface.gameObject);
 		}
 		isAIPlayer = false;
+		Destroy (pathfinder);
 	}
 
 	protected bool CanActivateAction (AGAction action)

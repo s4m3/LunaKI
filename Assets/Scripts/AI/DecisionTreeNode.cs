@@ -12,9 +12,4 @@ public class DecisionTreeNode : Object {
 		return this;
 	}
 	
-	public void setupBaseValues(AGPawn _enemy, AGPawn _self)
-	{
-		this.enemy = _enemy;
-		this.self = _self;
-	}
 }

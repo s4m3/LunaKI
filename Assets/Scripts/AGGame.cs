@@ -44,7 +44,7 @@ public class AGGame : MonoBehaviour {
 	public GameObject pathfinderPrefab;
 	private Pathfinder pathfinder;
 	
-	//TODO:erase
+	//DEBUG VARIABLES
 	public GameObject textTest;
 	public GameObject nodeSphere;
 	
@@ -69,7 +69,6 @@ public class AGGame : MonoBehaviour {
             return game != null ? game : GetInstance();
         }
     }
-	// Use this for initialization
 
     private static AGGame GetInstance()
     {
@@ -119,10 +118,8 @@ public class AGGame : MonoBehaviour {
     }
 
 	void Start () {
-		
 		gameState = GameState.Initialize;
 		InitializeGUIManager();
-		
 	}
 	
 	void InitializeGUIManager()
@@ -164,7 +161,6 @@ public class AGGame : MonoBehaviour {
 				WaitForPlayersToHaveChosenCharacter();
 				break;
 			case GameState.InitializeRound:
-				//print ("waiting for game to be initialized...");
 				WaitForPlayersToBeReady();
 				break;
 			case GameState.ReadyForNextRound:
@@ -227,7 +223,6 @@ public class AGGame : MonoBehaviour {
 	
 	void ChooseCharacters()
 	{
-		//StartRound();
 		gameState = GameState.ChosingCharacter;
 		if(mainMenu) Destroy(mainMenu);
 		AssignSpawnPoints();
@@ -242,17 +237,13 @@ public class AGGame : MonoBehaviour {
     void StartRound()
     {
 		InitGameInterface();
-		//TODO: Set Players according to choice menu and delete choice menu
 		foreach(AGPlayerInfo player in Players)
 		{
 			int classIndex = player.Controller.charChoiceMenu.ChosenCharacter;
 
-            Debug.Log("Chosen Character :" + classIndex);
-
             player.PlayerClass = PlayerClasses[classIndex].ClassType;
 		}
 		
-       // Debug.Log("Start Round");
 		if(scoreMenu) Destroy(scoreMenu.gameObject);
         SpawnPlayers();
         foreach (AGPlayerInfo info in Players)
@@ -265,14 +256,12 @@ public class AGGame : MonoBehaviour {
     }
 	void WaitForPlayersToBeReady()
 	{
-        //print("wait for ready "+Players.Length);
 		bool allPlayersReady = true;
         
 		foreach(AGPlayerInfo player in Players)
 		{
 			if(!player.Controller.playerReady) allPlayersReady = false;
-           
-            //print(player.PlayerName + " ready " + player.Controller.playerReady);
+
 		}
 		if(allPlayersReady) 
 		{
@@ -310,8 +299,6 @@ public class AGGame : MonoBehaviour {
 		pathfinder.text = textTest;
 		print (Players[0].Controller.pawn);
 		Players[Players.Length - 1].Controller.SetupAIController(Planet.gameObject, Players[0].Controller.pawn, pathfinder, difficulty);
-		
-		//Persist.serializeNodesToFile(pathfinder.Nodes, "nodes.dat");
 		
 		if(!DebugMode) 
 		{

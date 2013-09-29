@@ -3,10 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class ActionManager : Object {
-	List<Action> queue;
-	List<Action> active;
-	AGPlayerController controller;
-	int currentTime;
+	List<Action> queue;					//Queue for actions
+	List<Action> active;				//Active actions
+	AGPlayerController controller;		//Controller for executing actions
+	int currentTime; 					//Counter for passed time
 	
 	public ActionManager(AGPlayerController controller)
 	{
@@ -22,20 +22,17 @@ public class ActionManager : Object {
 	
 	public void scheduleAction(Action action)
 	{
-		//action soll nicht zweimal in der queue sein
+		//only add action if it isn't in the queue yet
 		Action[] copy = queue.ToArray();
 		foreach(Action currAction in copy) {
-//			Debug.Log (currAction.GetType());
 			if(currAction.GetType().Equals(action.GetType()))
 				return;
 		}
 		queue.Add(action);
-		//Debug.Log("count:" + queue.Count);
 	}
 	
 	public void execute()
 	{
-//		Debug.Log("executing in action manager, count:" + queue.Count);
 		currentTime += 1;
 		foreach(Action action in queue)
 		{
@@ -48,13 +45,10 @@ public class ActionManager : Object {
 				active.Add(action);
 			}
 		}
-		//Debug.Log (1);
 		Action[] copy = queue.ToArray();
 		Action[] copyActive = active.ToArray();
 		foreach(Action currAction in copy)
 		{
-			//Debug.Log ("currentTime: "+ currentTime);
-			//Debug.Log ("expiryTime: " + currAction.expiryTime);
 			if(currAction.expiryTime < currentTime)
 				queue.Remove(currAction);
 			
@@ -64,7 +58,6 @@ public class ActionManager : Object {
 				{
 					queue.Remove(currAction);
 					active.Add(currAction);
-					Debug.Log("added action: " + currAction.GetType().ToString());
 				}
 			}
 			
@@ -87,21 +80,11 @@ public class ActionManager : Object {
 			if(found) active.Add(actionWithHighestPrio);
 		}
 				
-		//Debug.Log (2);
-
 		Action[] activeCopy = active.ToArray();
 		foreach(Action actAction in activeCopy)
 		{
-			if(actAction.isComplete())
-			{
-//				Debug.Log("is complete");
-				active.Remove(actAction);
-			}
-			else
-			{
-//				Debug.Log("executing action");
-				actAction.execute();
-			}
+			if(actAction.isComplete()) active.Remove(actAction);
+			else actAction.execute();
 		}
 		
 	}
@@ -114,7 +97,6 @@ public class ActionManager : Object {
 			if(action.priority > highestPrio)
 				highestPrio = action.priority;
 		}
-//		Debug.Log("highestPrio" + highestPrio );
 		return highestPrio;
 	}
 	
@@ -155,14 +137,6 @@ public class ActionManager : Object {
 			action = new Action_Shoot(controller, currentTime);
 			Debug.Log("new Action: Shoot");
 			break;
-//		case ActionDecision.ActionDecisionType.Attack:
-//			action = new Action_Attack(controller, currentTime);
-//			Debug.Log("new Action: Attack");
-//			break;
-//		case ActionDecision.ActionDecisionType.Attack:
-//			action = new Action_Attack(controller, currentTime);
-//			Debug.Log("new Action: Attack");
-//			break;
 		default:
 			action = new Action(controller);
 			Debug.Log("new Action: None");

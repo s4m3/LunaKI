@@ -10,9 +10,19 @@ public class Decision_ShotsLeft : Decision {
 		if(!trueNode) this.trueNode = new ActionDecision(ActionDecision.ActionDecisionType.Shoot);
 		if(!falseNode) this.falseNode = new ActionDecision(ActionDecision.ActionDecisionType.DashToEnemy);
 		//enough shots left?
-		if(self.Player.Action_Shot.ShotsLeft > 3 && ChanceForRightDecision())
-			return trueNode;
+		if(self.Player.Action_Shot.ShotsLeft > 3)
+		{
+			if(ChanceForRightDecision())
+				return trueNode;
+			else
+				return falseNode;
+		}
 		else
-			return falseNode;
+		{
+			if(ChanceForRightDecision())
+				return falseNode;
+			else
+				return trueNode;
+		}
 	}
 }

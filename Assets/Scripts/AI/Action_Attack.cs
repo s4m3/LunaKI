@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
-
+//TEST CLASS, NOT IN USE ANYMORE
 public class Action_Attack : Action {
 	
 	public Action_Attack(AGPlayerController controller, int currentTime) : base(controller) 
@@ -26,7 +26,6 @@ public class Action_Attack : Action {
 
 	public override void execute ()
 	{
-//		Debug.Log("executing");
 		controller.MoveAIPlayer();
 	}
 }

@@ -10,9 +10,19 @@ public class Decision_EnemyLowHealth : Decision {
 		if(!trueNode) this.trueNode = new ActionDecision(ActionDecision.ActionDecisionType.MoveToEnemy);
 		if(!falseNode) this.falseNode = new Decision_HighUlti(self, enemy, difficulty);
 		//if enemy has low health
-		if(this.enemy.Health.currentValue < this.enemy.Health.max * 0.15 && ChanceForRightDecision())
-			return trueNode;
+		if(this.enemy.Health.currentValue < this.enemy.Health.max * 0.15)
+		{
+			if(ChanceForRightDecision())
+				return trueNode;
+			else
+				return falseNode;
+		}
 		else
-			return falseNode;
+		{
+			if(ChanceForRightDecision())
+				return falseNode;
+			else
+				return trueNode;
+		}
 	}
 }
