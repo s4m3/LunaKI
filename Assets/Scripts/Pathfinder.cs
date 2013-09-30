@@ -135,7 +135,7 @@ public class Pathfinder : MonoBehaviour {
 	
 	private void LoadNodesFromFileAndConvert()
 	{
-		List<string> stringList = Persist.deserializeNodesFromFile("newNodesDeleted2.dat");
+		List<string> stringList = Persist.deserializeNodesFromFile("nodes.dat");
 		string[] arr;
 		string[] posArr;
 		Node node;
