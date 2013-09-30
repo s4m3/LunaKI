@@ -146,7 +146,9 @@ public class AGSoundServer : MonoBehaviour {
 	public void Un_Mute(bool mute)
 	{
 		//TODO: change this to volume
-		this.m_AudioListener.enabled = !mute;
+		//this.m_AudioListener.enabled = !mute;
+		if(mute) AudioListener.volume = 0;
+		else AudioListener.volume = 1;
 	}
 	
 	public void Play (string s1, string s2)

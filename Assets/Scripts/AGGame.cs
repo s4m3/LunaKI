@@ -49,6 +49,7 @@ public class AGGame : MonoBehaviour {
 	public GameObject nodeSphere;
 	
 	public bool DebugMode;
+	public bool UseSplitScreen;
 
     bool m_spawnDelay = true;
 	protected AGSoundServer m_SoundServer = null; // TODO
@@ -271,12 +272,19 @@ public class AGGame : MonoBehaviour {
 		
 	}
 	
+	public void Un_Mute(bool isMuted)
+	{
+		m_SoundServer.Un_Mute(mainMenu.isMuted);
+	}
+	
 	void WaitForPlayersToHaveChosenMainMenuSettings()
 	{
 		if(!mainMenu || mainMenu.gameMode == MainMenu.GameMode.None) return;
 		
 		DebugMode = mainMenu.isDebugMode();
-		m_SoundServer.Un_Mute(mainMenu.isMuted);
+		UseSplitScreen = mainMenu.UseSplitScreen();
+		Un_Mute(mainMenu.isMuted);
+		
 		if(mainMenu.gameMode == MainMenu.GameMode.Multiplayer)
 		{
 			ChooseCharacters();	
@@ -285,8 +293,8 @@ public class AGGame : MonoBehaviour {
 			SetupAIPlayer(mainMenu.Difficulty());
 			ChooseCharacters();
 		}
-		//TODO: SOUND
-		m_SoundServer.m_AudioListenerPrefab.enabled = false;
+		
+		//m_SoundServer.m_AudioListenerPrefab.enabled = false;
 	}
 	
 	void SetupAIPlayer(float difficulty)
@@ -300,7 +308,7 @@ public class AGGame : MonoBehaviour {
 		print (Players[0].Controller.pawn);
 		Players[Players.Length - 1].Controller.SetupAIController(Planet.gameObject, Players[0].Controller.pawn, pathfinder, difficulty);
 		
-		if(!DebugMode) 
+		if(!UseSplitScreen) 
 		{
 			foreach(AGPlayerInfo player in Players) 
 			{

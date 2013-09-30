@@ -47,7 +47,7 @@ public class AGPlayerInterface : MonoBehaviour {
 			GameObject obj = (GameObject)GameObject.Instantiate (VignettePrefab);
 			vignette = obj.GetComponent<Vignette> ();
 			vignette.SetPlayer (player);
-			if(player.hasAIOpponent && !AGGame.Instance.DebugMode) vignette.SetSinglePlayerMode();
+			if(player.hasAIOpponent && !AGGame.Instance.UseSplitScreen) vignette.SetSinglePlayerMode();
 			SetHeadTextureGroupID();
 		}
 	}

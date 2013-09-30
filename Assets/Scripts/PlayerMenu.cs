@@ -50,8 +50,9 @@ public class PlayerMenu : MonoBehaviour {
 		}
 		if (!player.playerReady && GUI.Button (new Rect (SplitOffset.x + ReadyButtonPos.x, SplitOffset.y + ReadyButtonPos.y, buttonTexture.width, buttonTexture.width), buttonTexture, guiStyle) || joystickButtonDown) {
 			player.playerReady = true;
+			if(greyOut) AGGame.Instance.getSoundServer ().Play ("menu");
 			greyOut = false;
-			AGGame.Instance.getSoundServer ().Play ("menu");
+			
 		}
 		
 		if (player.playerReady) {

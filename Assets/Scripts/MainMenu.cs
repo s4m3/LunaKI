@@ -20,7 +20,8 @@ public class MainMenu : MonoBehaviour {
 	private bool canChangeDifficulty = true;
 	private int selectedButtonIndex = 0;
 	private float aiSkill = 10f;
-	private bool debug = true;
+	private bool debugPathfinding = false;
+	private bool useSplitScreen = true;
 	
 	private string[] menuOptions = new string[5];
 	
@@ -34,14 +35,19 @@ public class MainMenu : MonoBehaviour {
 	
 	public bool isDebugMode()
 	{
-		return debug;
+		return debugPathfinding;
+	}
+	
+	public bool UseSplitScreen()
+	{
+		return useSplitScreen;
 	}
 	
 	void Awake () {
 		menuOptions[0] = "Multiplayer";
 		menuOptions[1] = "Singleplayer";
 		menuOptions[2] = "Credits";
-		menuOptions[3] = "Sound";
+		menuOptions[3] = "Music";
 		menuOptions[4] = "Quit";
 		
 		gameMode = GameMode.None;
@@ -49,6 +55,7 @@ public class MainMenu : MonoBehaviour {
 		screenRes = AGGame.Instance.guiManager.ScreenResolution;
 		creditSize = AGGame.Instance.guiManager.ResizeTexture(credits);
 		creditsVisible = false;
+		isMuted = false;
 	}
 	
 	void Update () {
@@ -92,6 +99,7 @@ public class MainMenu : MonoBehaviour {
 			break;
 		case 3:
 			isMuted = !isMuted;
+			AGGame.Instance.Un_Mute(isMuted);
 			break;
 		case 4:
 			Application.Quit();
@@ -147,9 +155,6 @@ public class MainMenu : MonoBehaviour {
 		GUI.DrawTexture (new Rect (0, 0, screenRes.x, screenRes.y), backgroundTexture);
 		GUI.DrawTexture (new Rect (screenRes.x/2 - logo.width/2 + LogoOffset.x, LogoOffset.y, logo.width, logo.height), logo);
 		
-		//DEBUG MODE TOGGLE BUTTON:
-		debug = GUI.Toggle (new Rect (screenRes.x - 100, screenRes.y - 50, 100,50), debug, "Debug Mode");
-		
 		GUILayout.BeginArea(new Rect(0,screenRes.y/2, screenRes.x, screenRes.y/2));
 		
 		GUILayout.BeginVertical(buttonStyle);
@@ -201,11 +206,12 @@ public class MainMenu : MonoBehaviour {
 		GUILayout.FlexibleSpace();
 		
 		GUI.SetNextControlName(menuOptions[3]);
-		string buttontext = isMuted ? "Sound On" : "Sound Off";
+		string buttontext = isMuted ? "Music is Off" : "Music is On";
 		if(GUILayout.Button (buttontext, buttonStyle))
 		{
 			//Mute&Unmute
 			isMuted = !isMuted;
+			AGGame.Instance.Un_Mute(isMuted);
 		}
 		
 		GUILayout.FlexibleSpace();
@@ -244,8 +250,12 @@ public class MainMenu : MonoBehaviour {
 			GUI.Label(new Rect(150,50,200,80), Mathf.RoundToInt(aiSkill).ToString(), buttonStyle);
 			aiSkill = GUI.HorizontalSlider(new Rect (0, 130, 400, 80), aiSkill, 1f, 10.0f);
 			GUI.EndGroup();
+			
+			//DEBUG MODE AND SPLIT SCREEN TOGGLE BUTTON:
+			useSplitScreen = GUI.Toggle(new Rect (screenRes.x - 200, screenRes.y - 150, 180,50), useSplitScreen, "Split Screen");
+			debugPathfinding = GUI.Toggle (new Rect (screenRes.x - 200, screenRes.y - 100, 180,50), debugPathfinding, "Debug Pathfinding");
 		}
-		
+
 		
 		GUI.FocusControl(menuOptions[selectedButtonIndex]);
 	}
